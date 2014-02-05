@@ -7,7 +7,12 @@
  */
 angular.module("ui.jassa", ["ui.jassa.facettree"]);
 angular.module('ui.jassa', [])
-    
+
+/**
+ * Controller for the SPARQL based FacetTree
+ * Supports nested incoming and outgoing properties
+ *
+ */
 .controller('FacetTreeCtrl', ['$rootScope', '$scope', '$q', function($rootScope, $scope, $q) {
         
     var self = this;
