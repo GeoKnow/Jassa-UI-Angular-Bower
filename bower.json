@@ -1,0 +1,33 @@
+{
+  "name": "jassa-ui-angular",
+  "version": "0.0.1-SNAPSHOT",
+  "homepage": "https://github.com/GeoKnow/Jassa-UI-Angular",
+  "authors": [
+    "Claus Stadler <cstadler@informatik.uni-leipzig.de>"
+  ],
+  "description": "UI for JAvascript Suite for Sparql Access",
+  "main": "jassa-ui-angular-tpls.js",
+  "dependencies": {
+    "jassa": "~0.5.0",
+    "angular": "~2.3.0"
+  },
+  "keywords": [
+    "rdf",
+    "sparql",
+    "faceted-search",
+    "facete",
+    "sponate",
+    "sparql-to-json",
+    "jena",
+    "cache"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
+
