@@ -7,7 +7,7 @@
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.facettree"]);
 angular.module("ui.jassa.tpls", ["template/facettree/facet-dir-content.html","template/facettree/facet-tree-item.html"]);
-angular.module('ui.jassa', [])
+angular.module('ui.jassa.facettree', [])
 
 /**
  * Controller for the SPARQL based FacetTree

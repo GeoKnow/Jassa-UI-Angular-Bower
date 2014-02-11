@@ -6,7 +6,7 @@
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.facettree"]);
-angular.module('ui.jassa', [])
+angular.module('ui.jassa.facettree', [])
 
 /**
  * Controller for the SPARQL based FacetTree
