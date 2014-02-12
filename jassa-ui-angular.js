@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.1-SNAPSHOT - 2014-02-11
+ * Version: 0.0.1-SNAPSHOT - 2014-02-12
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.facettree"]);
