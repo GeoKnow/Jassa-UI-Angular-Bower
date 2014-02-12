@@ -178,7 +178,7 @@ angular.module("template/facettree/facet-dir-content.html", []).run(["$templateC
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "<div style=\"width: 100%; background-color: #eeeeff;\">\n" +
-    "	<div style=\"padding-right: 16px; padding-left: {{16*(dirset.path.getLength()+1)}}\">\n" +
+    "	<div style=\"padding-right: 16px; padding-left: {{16*(dirset.path.getLength()+1)}}px\">\n" +
     "\n" +
     "		<form class=\"form-inline\" role=\"form\" ng-submit=\"doFilter(dirset.path, dirset.filter.filterString)\">\n" +
     "\n" +
@@ -208,10 +208,10 @@ angular.module("template/facettree/facet-dir-content.html", []).run(["$templateC
     "<!--                 		</div> -->\n" +
     "\n" +
     "<span ng-show=\"dirset.children.length == 0\"\n" +
-    "	style=\"color: #aaaaaa; padding-left: {{16*(dirset.path.getLength()+1)}}\">(no\n" +
+    "	style=\"color: #aaaaaa; padding-left: {{16*(dirset.path.getLength()+1)}}px\">(no\n" +
     "	entries)</span>\n" +
     "\n" +
-    "<div style=\"padding-left: {{16*(dirset.path.getLength()+1)}}\"\n" +
+    "<div style=\"padding-left: {{16*(dirset.path.getLength()+1)}}px\"\n" +
     "	ng-repeat=\"facet in dirset.children\"\n" +
     "	ng-include=\"'template/facettree/facet-tree-item.html'\" ></div>\n" +
     "\n" +
@@ -238,10 +238,10 @@ angular.module("template/facettree/facet-tree-item.html", []).run(["$templateCac
     "\n" +
     "		<tabset class=\"tabset-small\">\n" +
     "			<tab heading=\"Incoming Facets\" active=\"{{facet.isIncomingActive === true}}\" select=\"selectIncoming(facet.item.getPath())\">\n" +
-    "				<div style=\"padding-left: {{16*(facet.item.getPath.getLength()+1)}}px\" ng-repeat=\"dirset in [facet.incoming]\" ng-include=\"'template/facettree/facet-dir-content.html'\"></div>\n" +
+    "				<div ng-repeat=\"dirset in [facet.incoming]\" ng-include=\"'template/facettree/facet-dir-content.html'\"></div>\n" +
     "			</tab>\n" +
     "			<tab heading=\"Outgoing Facets\" active=\"{{facet.isOutgoingActive === true}}\" select=\"selectOutgoing(facet.item.getPath())\">					\n" +
-    "				<div style=\"padding-left: {{16*(facet.item.getPath.getLength()+1)}}px\" ng-repeat=\"dirset in [facet.outgoing]\" ng-include=\"'template/facettree/facet-dir-content.html'\"></div>\n" +
+    "				<div ng-repeat=\"dirset in [facet.outgoing]\" ng-include=\"'template/facettree/facet-dir-content.html'\"></div>\n" +
     "			</tab>\n" +
     "		</tabset>\n" +
     "	</div>\n" +
