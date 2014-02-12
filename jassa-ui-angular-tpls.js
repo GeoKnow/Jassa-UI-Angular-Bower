@@ -179,7 +179,7 @@ angular.module("template/facettree/facet-dir-content.html", []).run(["$templateC
     "\n" +
     "<div style=\"width: 100%; background-color: #eeeeff;\">\n" +
     "	<div style=\"padding-right: 16px; padding-left: {{16*(dirset.path.getLength()+1)}}\">\n" +
-    "\n" +
+    "Fooooo: {{dirset.path.getLength()}}\n" +
     "		<form class=\"form-inline\" role=\"form\" ng-submit=\"doFilter(dirset.path, dirset.filter.filterString)\">\n" +
     "\n" +
     "			<div class=\"form-group\">\n" +
@@ -190,7 +190,7 @@ angular.module("template/facettree/facet-dir-content.html", []).run(["$templateC
     "			</div>\n" +
     "			<div class=\"form-group\" ng-if=\"dirset.pageCount > 1\" style=\"background-color: #eeeeff\">\n" +
     "				<pagination\n" +
-    "					style=\"padding-left: {{16 * (dirset.path.getLength() + 1)}}px\"\n" +
+    "					style=\"padding-left: {{16*(dirset.path.getLength()+1)}}px\"\n" +
     "					class=\"pagination-tiny\" max-size=\"7\"\n" +
     "					total-items=\"dirset.childFacetCount\" page=\"dirset.pageIndex\"\n" +
     "					boundary-links=\"true\" rotate=\"false\"\n" +
@@ -214,6 +214,8 @@ angular.module("template/facettree/facet-dir-content.html", []).run(["$templateC
     "<div style=\"padding-left: {{16*(dirset.path.getLength()+1)}}\"\n" +
     "	ng-repeat=\"facet in dirset.children\"\n" +
     "	ng-include=\"'template/facettree/facet-tree-item.html'\" ></div>\n" +
+    "\n" +
+    "\n" +
     "");
 }]);
 
@@ -234,7 +236,7 @@ angular.module("template/facettree/facet-tree-item.html", []).run(["$templateCac
     "	<div ng-if=\"facet.isExpanded\" style=\"width:100%\"> \n" +
     "\n" +
     "\n" +
-    "		<tabset class=\"tabset-small\">\n" +
+    "		<tabset class=\"tabset-small\" style=\"padding-left: {{16*(facet.item.getPath.getLength()+1)}}\">\n" +
     "			<tab heading=\"Incoming Facets\" active=\"{{facet.isIncomingActive === true}}\" select=\"selectIncoming(facet.item.getPath())\">\n" +
     "				<div ng-repeat=\"dirset in [facet.incoming]\" ng-include=\"'template/facettree/facet-dir-content.html'\"></div>\n" +
     "			</tab>\n" +
