@@ -178,7 +178,6 @@ angular.module("template/facettree/facet-dir-content.html", []).run(["$templateC
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "<div style=\"width: 100%; background-color: #eeeeff;\">\n" +
-    "Path Length: {{dirset.path.getLength()}} {{dirset}}\n" +
     "	<div style=\"padding-right: 16px; padding-left: {{16*(dirset.path.getLength()+1)}}\">\n" +
     "\n" +
     "		<form class=\"form-inline\" role=\"form\" ng-submit=\"doFilter(dirset.path, dirset.filter.filterString)\">\n" +
