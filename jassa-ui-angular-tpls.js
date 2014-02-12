@@ -69,7 +69,7 @@ angular.module('ui.jassa.facettree', [])
     };
               
     $scope.toggleCollapsed = function(path) {
-        util.CollectionUtils.toggleItem($scope.facetTreeConfig.getExpansionSet(), path);
+        Jassa.util.CollectionUtils.toggleItem($scope.facetTreeConfig.getExpansionSet(), path);
           
         var val = $scope.facetTreeConfig.getExpansionMap().get(path);
         if(val == null) {
