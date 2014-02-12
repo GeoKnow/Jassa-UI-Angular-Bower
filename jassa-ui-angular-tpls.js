@@ -58,7 +58,7 @@ angular.module('ui.jassa.facettree', [])
             //console.log('scopefacets', $scope.facet);             
             var promise = $scope.facetTreeService.fetchFacetTree(startPath);
               
-            sponate.angular.bridgePromise(promise, $q.defer(), $rootScope).then(function(data) {
+            Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $rootScope).then(function(data) {
                 facetTreeTagger.applyTags(data);
                 $scope.facet = data;
             });
