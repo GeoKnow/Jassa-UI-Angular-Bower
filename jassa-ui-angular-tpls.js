@@ -171,7 +171,7 @@ angular.module('ui.jassa.facet-value-list', [])
         var pageSize = 10;
         var offset = ($scope.currentPage - 1) * pageSize;
         
-        var dataPromise = fetcer.fetchData(offset, pageSize);
+        var dataPromise = fetcher.fetchData(offset, pageSize);
 
         Jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $rootScope).then(function(count) {
             $scope.totalItems = count;
