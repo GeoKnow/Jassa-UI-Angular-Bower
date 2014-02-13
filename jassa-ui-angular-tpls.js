@@ -384,9 +384,9 @@ angular.module('ui.jassa.facetvaluelist', [])
     return {
         restrict: 'EA',
         replace: true,
-        templateUrl: 'template/facet-value-list/facet-value-list.html',
+        templateUrl: 'template/facetvaluelist/facetvaluelist.html',
         transclude: false,
-        //require: 'facetValueList',
+        require: 'facetValueList',
         scope: {
             sparqlService: '=',
             facetTreeConfig: '=',
