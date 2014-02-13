@@ -27,6 +27,8 @@ angular.module('ui.jassa.facet-value-list', [])
     
     //$scope.path = null;
     
+    console.log('FacetValueList Ctrl entered');
+
 
     var facetValueService = null;
     
@@ -128,7 +130,12 @@ angular.module('ui.jassa.facet-value-list', [])
     $scope.$watch('facetTreeConfig.hashCode()', function() {
         update();
     }, true);
+    
+    $scope.$watch('path', function() {
+        update();
+    }, true);
 
+    
     $scope.$watch('currentPage', function() {
         //console.log("Change");
         updateItems();
