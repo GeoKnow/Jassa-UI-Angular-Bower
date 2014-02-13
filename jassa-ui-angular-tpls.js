@@ -48,6 +48,7 @@ angular.module('ui.jassa.facet-value-list', [])
             var constraintTaggerFactory = new facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
             
             var store = new Jassa.sponate.StoreFacade(this.sparqlService);
+            var labelMap = Jassa.sponate.SponateUtils.createDefaultLabelMap();
             store.addMap(labelMap, 'labels');
             labelsStore = store.labels;
             
