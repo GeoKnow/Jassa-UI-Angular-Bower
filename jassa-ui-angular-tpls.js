@@ -157,6 +157,7 @@ angular.module('ui.jassa.facet-value-list', [])
     
     
     self.refresh = function() {
+        var path = $scope.path;
         
         if(!facetValueService || !path) {
             $scope.totalItems = 0;
