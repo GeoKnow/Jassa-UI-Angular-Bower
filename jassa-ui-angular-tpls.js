@@ -62,7 +62,7 @@ angular.module('ui.jassa.facet-value-list', [])
             var baseFlow = labelsStore.find(criteria).concept(concept, true);
 
             var result = new ns.FacetValueFetcher(baseFlow);
-            return resul;
+            return result;
         }
     });
 
