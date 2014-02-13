@@ -26,8 +26,6 @@ angular.module('ui.jassa.facet-value-list', [])
     
     //$scope.path = null;
     
-    console.log('FacetValueList Ctrl entered');
-
 
     var facetValueService = null;
     
@@ -42,13 +40,13 @@ angular.module('ui.jassa.facet-value-list', [])
       
         createFacetValueFetcher: function(path, filterText) {
 
-            var facetConfig = facetTreeConfig.getFacetConfig();
+            var facetConfig = this.facetTreeConfig.getFacetConfig();
 
             var facetConceptGenerator = facete.FaceteUtils.createFacetConceptGenerator(facetConfig);
             var concept = facetConceptGenerator.createConceptResources(path, true);
             var constraintTaggerFactory = new facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
             
-            var store = new sponate.StoreFacade(sparqlService);
+            var store = new sponate.StoreFacade(this.sparqlService);
             store.addMap(labelMap, 'labels');
             labelsStore = store.labels;
             
