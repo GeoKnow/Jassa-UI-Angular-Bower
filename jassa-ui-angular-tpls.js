@@ -11,7 +11,7 @@ angular.module('ui.jassa.constraint-list', [])
 
 ;
 
-angular.module('ui.jassa.facet-value-list', [])
+angular.module('ui.jassa.facetValueList', [])
 
 /**
  * Controller for the SPARQL based FacetTree
