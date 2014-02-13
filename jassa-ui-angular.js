@@ -82,13 +82,15 @@ angular.module('ui.jassa.facet-value-list', [])
             
             var dataFlow = this.baseFlow.skip(offset).limit(limit);
 
+            var self = this;
+
             var dataPromise = dataFlow.asList(true).pipe(function(docs) {
 
                 
-                var facetConfig = this.facetTreeConfig.getFacetConfig();
+                var facetConfig = self.facetTreeConfig.getFacetConfig();
                 var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
                 
-                var tagger = this.constraintTaggerFactory.createConstraintTagger(path);
+                var tagger = constraintTaggerFactory.createConstraintTagger(path);
                 
                 var r = _(docs).map(function(doc) {
                     // TODO Sponate must support retaining node objects
