@@ -34,7 +34,7 @@ angular.module('ui.jassa.facet-value-list', [])
 
     var ns = {};
     ns.FacetValueService = Class.create({
-        initialize: function(sparqlService, facetTreeConfig, path, filterText) {
+        initialize: function(sparqlService, facetTreeConfig) {
             this.sparqlService = sparqlService;
             this.facetTreeConfig = facetTreeConfig;
         },
@@ -113,7 +113,7 @@ angular.module('ui.jassa.facet-value-list', [])
     var updateFacetTreeService = function() {
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig && $scope.path;
 
-        facetValueService = isConfigured ? new ns.FacetValueService($scope.sparqlService, $scope.FacetTreeConfig) : null;
+        facetValueService = isConfigured ? new ns.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
     };
     
     var update = function() {
