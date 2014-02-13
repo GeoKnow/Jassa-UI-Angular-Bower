@@ -7,6 +7,9 @@
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-value-list","ui.jassa.facettree"]);
 angular.module("ui.jassa.tpls", ["template/facet-value-list/facet-value-list.html","template/facettree/facet-dir-content.html","template/facettree/facet-tree-item.html"]);
+angular.module('ui.jassa.constraint-list', [])
+
+;
 
 angular.module('ui.jassa.facet-value-list', [])
 

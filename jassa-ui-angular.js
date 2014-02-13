@@ -6,6 +6,9 @@
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-value-list","ui.jassa.facettree"]);
+angular.module('ui.jassa.constraint-list', [])
+
+;
 
 angular.module('ui.jassa.facet-value-list', [])
 
