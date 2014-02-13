@@ -52,10 +52,10 @@ angular.module('ui.jassa.facet-value-list', [])
             labelsStore = store.labels;
             
             var criteria = {};
-            if(text) {
+            if(filterText) {
                 criteria = {$or: [
-                    {hiddenLabels: {$elemMatch: {id: {$regex: text, $options: 'i'}}}},
-                    {id: {$regex: text, $options: 'i'}}
+                    {hiddenLabels: {$elemMatch: {id: {$regex: filterText, $options: 'i'}}}},
+                    {id: {$regex: filterText, $options: 'i'}}
                 ]};
             }
             var baseFlow = labelsStore.find(criteria).concept(concept, true);
