@@ -5,7 +5,7 @@
  * Version: 0.0.1-SNAPSHOT - 2014-02-13
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-value-list","ui.jassa.facettree"]);
+angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facetValueList","ui.jassa.facettree"]);
 angular.module('ui.jassa.constraint-list', [])
 
 ;

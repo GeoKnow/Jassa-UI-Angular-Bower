@@ -5,8 +5,8 @@
  * Version: 0.0.1-SNAPSHOT - 2014-02-13
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-value-list","ui.jassa.facettree"]);
-angular.module("ui.jassa.tpls", ["template/facet-value-list/facet-value-list.html","template/facettree/facet-dir-content.html","template/facettree/facet-tree-item.html"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facetValueList","ui.jassa.facettree"]);
+angular.module("ui.jassa.tpls", ["template/facettree/facet-dir-content.html","template/facettree/facet-tree-item.html"]);
 angular.module('ui.jassa.constraint-list', [])
 
 ;
@@ -402,27 +402,6 @@ angular.module('ui.jassa.facettree', [])
 })
 
 ;
-
-angular.module("template/facet-value-list/facet-value-list.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("template/facet-value-list/facet-value-list.html",
-    "		<div class=\"frame\">\n" +
-    "			<form ng-submit=\"filterTable(filterText)\">\n" +
-    "			    <input type=\"text\" ng-model=\"filterText\" />\n" +
-    "				<input class=\"btn-primary\" type=\"submit\" value=\"Filter\" />\n" +
-    "			</form>\n" +
-    "			<table>\n" +
-    "                <tr><th>Value</th><th>Constrained</th></tr>\n" +
-    "<!-- <th>Count</th> -->\n" +
-    "			    <tr ng-repeat=\"item in facetValues\">\n" +
-    "                    <td>{{item.displayLabel}}</td>\n" +
-    "<!--                    <td>todo</td> -->\n" +
-    "                    <td><input type=\"checkbox\" ng-model=\"item.tags.isConstrainedEqual\" ng-change=\"toggleConstraint(item)\" /></td>\n" +
-    "                </tr>\n" +
-    "        	</table>\n" +
-    "    		<pagination class=\"pagination-small\" total-items=\"totalItems\" page=\"$parent.currentPage\" max-size=\"maxSize\" boundary-links=\"true\" rotate=\"false\" num-pages=\"numPages\"></pagination>\n" +
-    "		</div>\n" +
-    "");
-}]);
 
 angular.module("template/facettree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facettree/facet-dir-content.html",
