@@ -42,9 +42,9 @@ angular.module('ui.jassa.facet-value-list', [])
 
             var facetConfig = this.facetTreeConfig.getFacetConfig();
 
-            var facetConceptGenerator = facete.FaceteUtils.createFacetConceptGenerator(facetConfig);
+            var facetConceptGenerator = Jassa.facete.FaceteUtils.createFacetConceptGenerator(facetConfig);
             var concept = facetConceptGenerator.createConceptResources(path, true);
-            var constraintTaggerFactory = new facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
+            var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
             
             var store = new Jassa.sponate.StoreFacade(this.sparqlService);
             var labelMap = Jassa.sponate.SponateUtils.createDefaultLabelMap();
@@ -68,8 +68,9 @@ angular.module('ui.jassa.facet-value-list', [])
     
     ns.FacetValueFetcher = Class.create({
                 
-        initialize: function(baseFlow) {
+        initialize: function(baseFlow, facetTreeConfig) {
             this.baseFlow = baseFlow;
+            this.facetTreeConfig = facetTreeConfig;
         },
         
         fetchCount: function() {
@@ -83,7 +84,11 @@ angular.module('ui.jassa.facet-value-list', [])
 
             var dataPromise = dataFlow.asList(true).pipe(function(docs) {
 
-                var tagger = constraintTaggerFactory.createConstraintTagger(path);
+                
+                var facetConfig = this.facetTreeConfig.getFacetConfig();
+                var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
+                
+                var tagger = this.constraintTaggerFactory.createConstraintTagger(path);
                 
                 var r = _(docs).map(function(doc) {
                     // TODO Sponate must support retaining node objects
