@@ -60,7 +60,7 @@ angular.module('ui.jassa.facet-value-list', [])
             }
             var baseFlow = labelsStore.find(criteria).concept(concept, true);
 
-            var result = new ns.FacetValueFetcher(baseFlow, this.facetTreeConfig);
+            var result = new ns.FacetValueFetcher(baseFlow, this.facetTreeConfig, path);
             return result;
         }
     });
@@ -68,9 +68,10 @@ angular.module('ui.jassa.facet-value-list', [])
     
     ns.FacetValueFetcher = Class.create({
                 
-        initialize: function(baseFlow, facetTreeConfig) {
+        initialize: function(baseFlow, facetTreeConfig, path) {
             this.baseFlow = baseFlow;
             this.facetTreeConfig = facetTreeConfig;
+            this.path = path;
         },
         
         fetchCount: function() {
@@ -85,7 +86,7 @@ angular.module('ui.jassa.facet-value-list', [])
             var self = this;
 
             var dataPromise = dataFlow.asList(true).pipe(function(docs) {
-
+                var path = self.path;
                 
                 var facetConfig = self.facetTreeConfig.getFacetConfig();
                 var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
