@@ -5,131 +5,16 @@
  * Version: 0.0.1-SNAPSHOT - 2014-02-13
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-value-list","ui.jassa.facettree"]);
-angular.module("ui.jassa.tpls", ["template/facet-value-list/facet-value-list.html","template/facettree/facet-dir-content.html","template/facettree/facet-tree-item.html"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list"]);
+angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html"]);
 angular.module('ui.jassa.constraint-list', [])
 
-;
+.controller('ConstraintListCtrl', ['$scope', '$rootScope', function($scope, $rootScope) {
 
-angular.module('ui.jassa.facet-value-list', [])
-
-/**
- * Controller for the SPARQL based FacetTree
- * Supports nested incoming and outgoing properties
- *
- */
-.controller('FacetValueListCtrl', ['$rootScope', '$scope', '$q', function($rootScope, $scope, $q) {
-
-    $scope.filterText = '';
-    $scope.totalItems = 0;
-    $scope.currentPage = 1;
-    $scope.maxSize = 5;
-    
-    //$scope.path = null;
-    
-
-    var facetValueService = null;
-    
     var self = this;
 
-    var ns = {};
-    ns.FacetValueService = Class.create({
-        initialize: function(sparqlService, facetTreeConfig) {
-            this.sparqlService = sparqlService;
-            this.facetTreeConfig = facetTreeConfig;
-        },
-      
-        createFacetValueFetcher: function(path, filterText) {
+    //var constraintManager;
 
-            var facetConfig = this.facetTreeConfig.getFacetConfig();
-
-            var facetConceptGenerator = Jassa.facete.FaceteUtils.createFacetConceptGenerator(facetConfig);
-            var concept = facetConceptGenerator.createConceptResources(path, true);
-            var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
-            
-            var store = new Jassa.sponate.StoreFacade(this.sparqlService);
-            var labelMap = Jassa.sponate.SponateUtils.createDefaultLabelMap();
-            store.addMap(labelMap, 'labels');
-            labelsStore = store.labels;
-            
-            var criteria = {};
-            if(filterText) {
-                criteria = {$or: [
-                    {hiddenLabels: {$elemMatch: {id: {$regex: filterText, $options: 'i'}}}},
-                    {id: {$regex: filterText, $options: 'i'}}
-                ]};
-            }
-            var baseFlow = labelsStore.find(criteria).concept(concept, true);
-
-            var result = new ns.FacetValueFetcher(baseFlow, this.facetTreeConfig, path);
-            return result;
-        }
-    });
-
-    
-    ns.FacetValueFetcher = Class.create({
-                
-        initialize: function(baseFlow, facetTreeConfig, path) {
-            this.baseFlow = baseFlow;
-            this.facetTreeConfig = facetTreeConfig;
-            this.path = path;
-        },
-        
-        fetchCount: function() {
-            var countPromise = this.baseFlow.count();
-            return countPromise;
-        },
-        
-        fetchData: function(offset, limit) {
-            
-            var dataFlow = this.baseFlow.skip(offset).limit(limit);
-
-            var self = this;
-
-            var dataPromise = dataFlow.asList(true).pipe(function(docs) {
-                var path = self.path;
-                
-                var facetConfig = self.facetTreeConfig.getFacetConfig();
-                var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
-                
-                var tagger = constraintTaggerFactory.createConstraintTagger(path);
-                
-                var r = _(docs).map(function(doc) {
-                    // TODO Sponate must support retaining node objects
-                    //var node = rdf.NodeFactory.parseRdfTerm(doc.id);
-                    var node = doc.id;
-                    
-                    var label = doc.displayLabel ? doc.displayLabel : '' + doc.id;
-                    //console.log('displayLabel', label);
-                    var tmp = {
-                        displayLabel: label,
-                        path: path,
-                        node: node,
-                        tags: tagger.getTags(node)
-                    };
-
-                    return tmp;
-                    
-                });
-
-                return r;
-            });
-            
-            return dataPromise;
-        }
-    });
-
-    var updateFacetTreeService = function() {
-        var isConfigured = $scope.sparqlService && $scope.facetTreeConfig && $scope.path;
-
-        facetValueService = isConfigured ? new ns.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
-    };
-    
-    var update = function() {
-        updateFacetTreeService();
-        self.refresh();
-    };
-    
     $scope.$watch('sparqlService', function() {
         update();
     });
@@ -137,85 +22,70 @@ angular.module('ui.jassa.facet-value-list', [])
     $scope.$watch('facetTreeConfig.hashCode()', function() {
         update();
     }, true);
+
+
+    var updateConfig = function() {
+        var isConfigured = !!$scope.facetTreeConfig;
+        //debugger;
+        $scope.constraintManager = isConfigured ? $scope.facetTreeConfig.getFacetConfig().getConstraintManager() : null;
+    };
     
-    $scope.$watch('path', function() {
-        update();
-    }, true);
-
-    
-    $scope.$watch('currentPage', function() {
-        //console.log("Change");
-        update();
-    });
-
-
-    $scope.toggleConstraint = function(item) {
-        var constraintManager = facetConfig.getConstraintManager();
-        
-        var constraint = new facete.ConstraintSpecPathValue(
-                'equal',
-                item.path,
-                item.node);
-
-        // TODO Integrate a toggle constraint method into the filterManager
-        constraintManager.toggleConstraint(constraint);
+    var update = function() {
+        updateConfig();
+        self.refresh();
     };
     
     
-    
-    self.refresh = function() {
-        var path = $scope.path;
-        
-        if(!facetValueService || !path) {
-            $scope.totalItems = 0;
-            $scope.facetValues = [];
-            return;
+    var renderConstraint = function(constraint) {
+        var type = constraint.getName();
+
+        var result;
+        switch(type) {
+        case 'equal':
+            var pathStr = ''  + constraint.getDeclaredPath();
+            if(pathStr === '') {
+                pathStr = '()';
+            }
+            result = pathStr + ' = ' + constraint.getValue();
+        break;
+        default:
+            result = constraint;
         }
         
-        var fetcher = facetValueService.createFacetValueFetcher($scope.path, $scope.filterText);
-
-        var countPromise = fetcher.fetchCount();
-        
-        var pageSize = 10;
-        var offset = ($scope.currentPage - 1) * pageSize;
-        
-        var dataPromise = fetcher.fetchData(offset, pageSize);
-
-        Jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $rootScope).then(function(count) {
-            $scope.totalItems = count;
-        });
-        
-        Jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $rootScope).then(function(items) {
-            $scope.facetValues = items;
-        });
-
+        return result;
     };
-
-    $scope.filterTable = function(filterText) {
-        $scope.filterText = filterText;
-        update();
-    };
-
     
-    /*
-    $scope.$on('facete:facetSelected', function(ev, path) {
+    self.refresh = function() {
 
-        $scope.currentPage = 1;
-        $scope.path = path;
+        var constraintManager = $scope.constraintManager;
         
-        updateItems();
-    });
-    
-    $scope.$on('facete:constraintsChanged', function() {
-        updateItems(); 
-    });
-    */
-//  $scope.firstText = '<<';
-//  $scope.previousText = '<';
-//  $scope.nextText = '>';
-//  $scope.lastText = '>>';
+        var items;
+        if(!constraintManager) {
+            items = [];
+        }
+        else {
+            var constraints = constraintManager.getConstraints();
+            
+            items =_(constraints).map(function(constraint) {
+                var r = {
+                    constraint: constraint,
+                    label: '' + renderConstraint(constraint)
+                };
+                
+                return r;
+            });
+        }
 
+        $scope.constraints = items;
+    };
+    
+    $scope.removeConstraint = function(item) {
+        $scope.constraintManager.removeConstraint(item.constraint);
+        //$scope.$emit('facete:constraintsChanged');
+    };
+    
 }])
+
 
 /**
  * The actual dependencies are:
@@ -223,30 +93,25 @@ angular.module('ui.jassa.facet-value-list', [])
  * - facetTreeConfig
  * - labelMap (maybe this should be part of the facetTreeConfig) 
  */
-.directive('facetValueList', function() {
+.directive('constraintList', function() {
     return {
         restrict: 'EA',
         replace: true,
-        templateUrl: 'template/facet-value-list/facet-value-list.html',
+        templateUrl: 'template/constraint-list/constraint-list.html',
         transclude: false,
-        require: 'facetValueList',
+        require: 'constraintList',
         scope: {
             sparqlService: '=',
             facetTreeConfig: '=',
-            path: '=',
             onSelect: '&select'
         },
-        controller: 'FacetValueListCtrl'
-//        compile: function(elm, attrs) {
-//            return function link(scope, elm, attrs, controller) {
-//            };
-//        }
+        controller: 'ConstraintListCtrl'
     };
 })
 
 ;
 
-angular.module('ui.jassa.facettree', [])
+angular.module('ui.jassa.facet-tree', [])
 
 /**
  * Controller for the SPARQL based FacetTree
@@ -393,7 +258,7 @@ angular.module('ui.jassa.facettree', [])
     return {
         restrict: 'EA',
         replace: true,
-        templateUrl: 'template/facettree/facet-tree-item.html',
+        templateUrl: 'template/facet-tree/facet-tree-item.html',
         transclude: false,
         require: 'facetTree',
         scope: {
@@ -411,29 +276,259 @@ angular.module('ui.jassa.facettree', [])
 
 ;
 
-angular.module("template/facet-value-list/facet-value-list.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("template/facet-value-list/facet-value-list.html",
-    "<div class=\"frame\">\n" +
-    "	<form ng-submit=\"filterTable(filterText)\">\n" +
-    "	    <input type=\"text\" ng-model=\"filterText\" />\n" +
-    "		<input class=\"btn-primary\" type=\"submit\" value=\"Filter\" />\n" +
-    "	</form>\n" +
-    "	<table>\n" +
-    "              <tr><th>Value</th><th>Constrained</th></tr>\n" +
-    "<!-- <th>Count</th> -->\n" +
-    "	    <tr ng-repeat=\"item in facetValues\">\n" +
-    "                  <td>{{item.displayLabel}}</td>\n" +
-    "<!--                    <td>todo</td> -->\n" +
-    "                  <td><input type=\"checkbox\" ng-model=\"item.tags.isConstrainedEqual\" ng-change=\"toggleConstraint(item)\" /></td>\n" +
-    "              </tr>\n" +
-    "      	</table>\n" +
-    "  		<pagination class=\"pagination-small\" total-items=\"$parent.totalItems\" page=\"$parent.currentPage\" max-size=\"$parent.maxSize\" boundary-links=\"true\" rotate=\"false\" num-pages=\"$parent.numPages\"></pagination>\n" +
-    "</div>\n" +
+angular.module('ui.jassa.facet-value-list', [])
+
+/**
+ * Controller for the SPARQL based FacetTree
+ * Supports nested incoming and outgoing properties
+ *
+ */
+.controller('FacetValueListCtrl', ['$rootScope', '$scope', '$q', function($rootScope, $scope, $q) {
+
+    $scope.filterText = '';
+
+    $scope.pagination = {
+        totalItems: 0,
+        currentPage: 1,
+        maxSize: 5
+    };
+    
+    //$scope.path = null;
+    
+
+    var facetValueService = null;
+    
+    var self = this;
+
+    var ns = {};
+    ns.FacetValueService = Class.create({
+        initialize: function(sparqlService, facetTreeConfig) {
+            this.sparqlService = sparqlService;
+            this.facetTreeConfig = facetTreeConfig;
+        },
+      
+        getFacetTreeConfig: function() {
+            return this.facetTreeConfig;
+        },
+        
+        createFacetValueFetcher: function(path, filterText) {
+
+            var facetConfig = this.facetTreeConfig.getFacetConfig();
+
+            var facetConceptGenerator = Jassa.facete.FaceteUtils.createFacetConceptGenerator(facetConfig);
+            var concept = facetConceptGenerator.createConceptResources(path, true);
+            var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
+            
+            var store = new Jassa.sponate.StoreFacade(this.sparqlService);
+            var labelMap = Jassa.sponate.SponateUtils.createDefaultLabelMap();
+            store.addMap(labelMap, 'labels');
+            labelsStore = store.labels;
+            
+            var criteria = {};
+            if(filterText) {
+                criteria = {$or: [
+                    {hiddenLabels: {$elemMatch: {id: {$regex: filterText, $options: 'i'}}}},
+                    {id: {$regex: filterText, $options: 'i'}}
+                ]};
+            }
+            var baseFlow = labelsStore.find(criteria).concept(concept, true);
+
+            var result = new ns.FacetValueFetcher(baseFlow, this.facetTreeConfig, path);
+            return result;
+        }
+    });
+
+    
+    ns.FacetValueFetcher = Class.create({
+                
+        initialize: function(baseFlow, facetTreeConfig, path) {
+            this.baseFlow = baseFlow;
+            this.facetTreeConfig = facetTreeConfig;
+            this.path = path;
+        },
+        
+        fetchCount: function() {
+            var countPromise = this.baseFlow.count();
+            return countPromise;
+        },
+        
+        fetchData: function(offset, limit) {
+            
+            var dataFlow = this.baseFlow.skip(offset).limit(limit);
+
+            var self = this;
+
+            var dataPromise = dataFlow.asList(true).pipe(function(docs) {
+                var path = self.path;
+                
+                var facetConfig = self.facetTreeConfig.getFacetConfig();
+                var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
+                
+                var tagger = constraintTaggerFactory.createConstraintTagger(path);
+                
+                var r = _(docs).map(function(doc) {
+                    // TODO Sponate must support retaining node objects
+                    //var node = rdf.NodeFactory.parseRdfTerm(doc.id);
+                    var node = doc.id;
+                    
+                    var label = doc.displayLabel ? doc.displayLabel : '' + doc.id;
+                    //console.log('displayLabel', label);
+                    var tmp = {
+                        displayLabel: label,
+                        path: path,
+                        node: node,
+                        tags: tagger.getTags(node)
+                    };
+
+                    return tmp;
+                    
+                });
+
+                return r;
+            });
+            
+            return dataPromise;
+        }
+    });
+
+    var updateFacetTreeService = function() {
+        var isConfigured = $scope.sparqlService && $scope.facetTreeConfig && $scope.path;
+
+        facetValueService = isConfigured ? new ns.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
+    };
+    
+    var update = function() {
+        updateFacetTreeService();
+        self.refresh();
+    };
+    
+    $scope.$watch('sparqlService', function() {
+        update();
+    });
+    
+    $scope.$watch('facetTreeConfig.hashCode()', function() {
+        update();
+    }, true);
+    
+    $scope.$watch('path', function() {
+        update();
+    }, true);
+
+    
+    $scope.$watch('pagination.currentPage', function() {
+        //console.log("Change");
+        update();
+    });
+
+
+    $scope.toggleConstraint = function(item) {
+        var constraintManager = facetValueService.getFacetTreeConfig().getFacetConfig().getConstraintManager();
+        
+        var constraint = new facete.ConstraintSpecPathValue(
+                'equal',
+                item.path,
+                item.node);
+
+        // TODO Integrate a toggle constraint method into the filterManager
+        constraintManager.toggleConstraint(constraint);
+    };
+    
+    
+    
+    self.refresh = function() {
+        var path = $scope.path;
+        
+        if(!facetValueService || !path) {
+            $scope.totalItems = 0;
+            $scope.facetValues = [];
+            return;
+        }
+        
+        var fetcher = facetValueService.createFacetValueFetcher($scope.path, $scope.filterText);
+
+        var countPromise = fetcher.fetchCount();
+        
+        var pageSize = 10;
+        var offset = ($scope.pagination.currentPage - 1) * pageSize;
+        
+        var dataPromise = fetcher.fetchData(offset, pageSize);
+
+        Jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $rootScope).then(function(count) {
+            $scope.pagination.totalItems = count;
+        });
+        
+        Jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $rootScope).then(function(items) {
+            $scope.facetValues = items;
+        });
+
+    };
+
+    $scope.filterTable = function(filterText) {
+        $scope.filterText = filterText;
+        update();
+    };
+
+    
+    /*
+    $scope.$on('facete:facetSelected', function(ev, path) {
+
+        $scope.currentPage = 1;
+        $scope.path = path;
+        
+        updateItems();
+    });
+    
+    $scope.$on('facete:constraintsChanged', function() {
+        updateItems(); 
+    });
+    */
+//  $scope.firstText = '<<';
+//  $scope.previousText = '<';
+//  $scope.nextText = '>';
+//  $scope.lastText = '>>';
+
+}])
+
+/**
+ * The actual dependencies are:
+ * - sparqlServiceFactory
+ * - facetTreeConfig
+ * - labelMap (maybe this should be part of the facetTreeConfig) 
+ */
+.directive('facetValueList', function() {
+    return {
+        restrict: 'EA',
+        replace: true,
+        templateUrl: 'template/facet-value-list/facet-value-list.html',
+        transclude: false,
+        require: 'facetValueList',
+        scope: {
+            sparqlService: '=',
+            facetTreeConfig: '=',
+            path: '=',
+            onSelect: '&select'
+        },
+        controller: 'FacetValueListCtrl'
+//        compile: function(elm, attrs) {
+//            return function link(scope, elm, attrs, controller) {
+//            };
+//        }
+    };
+})
+
+;
+
+angular.module("template/constraint-list/constraint-list.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/constraint-list/constraint-list.html",
+    "<ul>\n" +
+    "  	<li ng-show=\"constraints.length == 0\" style=\"color: #aaaaaa;\">(no constraints)</li>\n" +
+    "   	<li ng-repeat=\"constraint in constraints\"><a href=\"\" ng-click=\"removeConstraint(constraint)\">{{constraint.label}}</a></li>\n" +
+    "</ul>\n" +
     "");
 }]);
 
-angular.module("template/facettree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("template/facettree/facet-dir-content.html",
+angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/facet-tree/facet-dir-content.html",
     "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
@@ -473,14 +568,14 @@ angular.module("template/facettree/facet-dir-content.html", []).run(["$templateC
     "\n" +
     "<div style=\"padding-left: {{16*(dirset.path.getLength()+1)}}px\"\n" +
     "	ng-repeat=\"facet in dirset.children\"\n" +
-    "	ng-include=\"'template/facettree/facet-tree-item.html'\" ></div>\n" +
+    "	ng-include=\"'template/facet-tree/facet-tree-item.html'\" ></div>\n" +
     "\n" +
     "\n" +
     "");
 }]);
 
-angular.module("template/facettree/facet-tree-item.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("template/facettree/facet-tree-item.html",
+angular.module("template/facet-tree/facet-tree-item.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/facet-tree/facet-tree-item.html",
     "<div ng-class=\"{'frame': facet.isExpanded}\">\n" +
     "	<div class=\"facet-row\" ng-class=\"{'highlite': facet.isExpanded}\" ng-mouseover=\"facet.isHovered=true\" ng-mouseleave=\"facet.isHovered=false\">\n" +
     "		<a ng-show=\"facet.isExpanded\" href=\"\" ng-click=\"toggleCollapsed(facet.item.getPath())\"><span class=\"glyphicon glyphicon-chevron-down\"></span></a>\n" +
@@ -498,13 +593,34 @@ angular.module("template/facettree/facet-tree-item.html", []).run(["$templateCac
     "\n" +
     "		<tabset class=\"tabset-small\">\n" +
     "			<tab heading=\"Incoming Facets\" active=\"{{facet.isIncomingActive === true}}\" select=\"selectIncoming(facet.item.getPath())\">\n" +
-    "				<div ng-repeat=\"dirset in [facet.incoming]\" ng-include=\"'template/facettree/facet-dir-content.html'\"></div>\n" +
+    "				<div ng-repeat=\"dirset in [facet.incoming]\" ng-include=\"'template/facet-tree/facet-dir-content.html'\"></div>\n" +
     "			</tab>\n" +
     "			<tab heading=\"Outgoing Facets\" active=\"{{facet.isOutgoingActive === true}}\" select=\"selectOutgoing(facet.item.getPath())\">					\n" +
-    "				<div ng-repeat=\"dirset in [facet.outgoing]\" ng-include=\"'template/facettree/facet-dir-content.html'\"></div>\n" +
+    "				<div ng-repeat=\"dirset in [facet.outgoing]\" ng-include=\"'template/facet-tree/facet-dir-content.html'\"></div>\n" +
     "			</tab>\n" +
     "		</tabset>\n" +
     "	</div>\n" +
+    "</div>\n" +
+    "");
+}]);
+
+angular.module("template/facet-value-list/facet-value-list.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/facet-value-list/facet-value-list.html",
+    "<div class=\"frame\">\n" +
+    "	<form ng-submit=\"filterTable(filterText)\">\n" +
+    "	    <input type=\"text\" ng-model=\"filterText\" />\n" +
+    "		<input class=\"btn-primary\" type=\"submit\" value=\"Filter\" />\n" +
+    "	</form>\n" +
+    "	<table>\n" +
+    "              <tr><th>Value</th><th>Constrained</th></tr>\n" +
+    "<!-- <th>Count</th> -->\n" +
+    "	    <tr ng-repeat=\"item in facetValues\">\n" +
+    "                  <td>{{item.displayLabel}}</td>\n" +
+    "<!--                    <td>todo</td> -->\n" +
+    "                  <td><input type=\"checkbox\" ng-model=\"item.tags.isConstrainedEqual\" ng-change=\"toggleConstraint(item)\" /></td>\n" +
+    "              </tr>\n" +
+    "      	</table>\n" +
+    "  		<pagination class=\"pagination-small\" total-items=\"pagination.totalItems\" page=\"pagination.currentPage\" max-size=\"pagination.maxSize\" boundary-links=\"true\" rotate=\"false\" num-pages=\"pagination.numPages\"></pagination>\n" +
     "</div>\n" +
     "");
 }]);
