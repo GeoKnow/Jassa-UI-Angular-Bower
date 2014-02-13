@@ -74,7 +74,7 @@ angular.module('ui.jassa.facet-value-list', [])
         },
         
         fetchCount: function() {
-            var countPromise = baseFlow.count();
+            var countPromise = this.baseFlow.count();
             return countPromise;
         },
         
