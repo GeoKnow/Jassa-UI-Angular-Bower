@@ -8,7 +8,7 @@
   "main": ["jassa-ui-angular-tpls.js", "jassa-ui-angular.css"],
   "dependencies": {
     "jassa": ">=0.0.1-SNAPSHOT",
-    "angular": ">=1"
+    "angular-ui-bootstrap": ""
   },
   "keywords": [
     "rdf",
