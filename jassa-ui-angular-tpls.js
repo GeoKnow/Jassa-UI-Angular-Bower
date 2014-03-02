@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.1-SNAPSHOT - 2014-03-01
+ * Version: 0.0.1-SNAPSHOT - 2014-03-02
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table"]);
@@ -687,7 +687,7 @@ angular.module('ui.jassa.sparql-table', [])
     $scope.ObjectUtils = util.ObjectUtils;
     
     $scope.$watch('[ObjectUtils.hashCode(sparqlService), ObjectUtils.hashCode(config)]', function (newVal, oldVal) {
-        $scope.refreshData();
+        $scope.refresh();
     }, true);
 
     
