@@ -1,16 +1,16 @@
 {
-  "name": "jassa-ui-angular",
+  "name": "jassa-ui-angular-openlayers",
   "homepage": "https://github.com/GeoKnow/Jassa-UI-Angular",
   "authors": [
     "Claus Stadler <cstadler@informatik.uni-leipzig.de>"
   ],
   "description": "UI for JAvascript Suite for Sparql Access",
-  "main": ["jassa-ui-angular-tpls.js", "jassa-ui-angular.css"],
+  "main": ["jassa-ui-angular-openlayers-tpls.js, jassa-ui-openlayers.css"],
   "dependencies": {
-    "jassa": ">=0.0.1-SNAPSHOT",
+    "jquery-ui": "1.10.3",
+    "openlayers": "2.13.1",
     "angular": ">=1",
-    "bootstrap": "3.1.0",
-    "angular-ui-bootstrap": ""
+    "jassa": ">=0.0.1-SNAPSHOT"
   },
   "keywords": [
     "rdf",
