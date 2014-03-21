@@ -15,15 +15,6 @@ angular.module('ui.jassa.constraint-list', [])
 
     //var constraintManager;
 
-    $scope.$watch('sparqlService', function() {
-        update();
-    });
-    
-    $scope.$watch('facetTreeConfig.hashCode()', function() {
-        update();
-    }, true);
-
-
     var updateConfig = function() {
         var isConfigured = !!$scope.facetTreeConfig;
         //debugger;
@@ -34,6 +25,14 @@ angular.module('ui.jassa.constraint-list', [])
         updateConfig();
         self.refresh();
     };
+
+
+    $scope.ObjectUtils = Jassa.util.ObjectUtils;
+
+    var watchList = '[ObjectUtils.hashCode(sparqlService), ObjectUtils.hashCode(facetTreeConfig)]';
+    $scope.$watch(watchList, function() {
+		update();
+	});
     
     
     var renderConstraint = function(constraint) {
@@ -135,15 +134,14 @@ angular.module('ui.jassa.facet-tree', [])
         self.refresh();
     };
     
-    $scope.$watch('sparqlService', function() {
-    //console.log('args', $scope.sparqlService);
-        update();
-    });
-    
-    $scope.$watch('facetTreeConfig.hashCode()', function() {
+
+    $scope.ObjectUtils = Jassa.util.ObjectUtils;
+
+    var watchList = '[ObjectUtils.hashCode(sparqlService), ObjectUtils.hashCode(facetTreeConfig)]';
+    $scope.$watch(watchList, function() {
         update();
     }, true);
-              
+                  
       
     $scope.doFilter = function(path, filterString) {
         $scope.facetTreeConfig.getPathToFilterString().put(path, filterString);
@@ -401,24 +399,14 @@ angular.module('ui.jassa.facet-value-list', [])
         updateFacetTreeService();
         self.refresh();
     };
-    
-    $scope.$watch('sparqlService', function() {
-        update();
-    });
-    
-    $scope.$watch('facetTreeConfig.hashCode()', function() {
-        update();
-    }, true);
-    
-    $scope.$watch('path', function() {
-        update();
-    }, true);
 
-    
-    $scope.$watch('pagination.currentPage', function() {
-        //console.log("Change");
+    $scope.ObjectUtils = Jassa.util.ObjectUtils;
+
+    var watchList = '[ObjectUtils.hashCode(sparqlService), ObjectUtils.hashCode(facetTreeConfig), "" + path, pagination.currentPage]';
+    $scope.$watch(watchList, function() {
         update();
-    });
+    }, true);
+                  
 
 
     $scope.toggleConstraint = function(item) {
