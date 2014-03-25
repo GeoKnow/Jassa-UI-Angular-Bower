@@ -2,11 +2,11 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.1-SNAPSHOT - 2014-03-21
+ * Version: 0.0.1-SNAPSHOT - 2014-03-25
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table"]);
-angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/sparql-table/sparql-table.html"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table","ui.jassa.template-list"]);
+angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/sparql-table/sparql-table.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.constraint-list', [])
 
 .controller('ConstraintListCtrl', ['$scope', '$rootScope', function($scope, $rootScope) {
@@ -111,6 +111,46 @@ angular.module('ui.jassa.constraint-list', [])
 ;
 
 angular.module('ui.jassa.facet-tree', [])
+
+/**
+ * Controller for the SPARQL based FacetTree
+ * Supports nested incoming and outgoing properties
+ *
+ */
+.controller('FacetTreeDirContentCtrl', ['$rootScope', '$scope', '$q', function($rootScope, $scope, $q) {
+
+}])
+
+/**
+ * The actual dependencies are:
+ * - sparqlServiceFactory
+ * - facetTreeConfig
+ * - labelMap (maybe this should be part of the facetTreeConfig) 
+ */
+.directive('facetTreeDirContent', function($parse) {
+    return {
+        restrict: 'EA',
+        replace: true,
+        templateUrl: 'template/facet-tree/facet-tree-content.html',
+        transclude: false,
+        require: 'facetTree',
+        scope: {
+            sparqlService: '=',
+            facetTreeConfig: '=',
+            plugins: '=',
+            onSelect: '&select'
+        },
+        controller: 'FacetTreeDirContentCtrl',
+        compile: function(elm, attrs) {
+            return function link(scope, elm, attrs, controller) {
+            };
+        }
+    };
+})
+
+;
+
+angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
 /**
  * Controller for the SPARQL based FacetTree
@@ -252,7 +292,7 @@ angular.module('ui.jassa.facet-tree', [])
  * - facetTreeConfig
  * - labelMap (maybe this should be part of the facetTreeConfig) 
  */
-.directive('facetTree', function($parse) {
+.directive('facetTree', function() {
     return {
         restrict: 'EA',
         replace: true,
@@ -262,6 +302,8 @@ angular.module('ui.jassa.facet-tree', [])
         scope: {
             sparqlService: '=',
             facetTreeConfig: '=',
+            plugins: '=',
+            pluginContext: '=', //plugin context
             onSelect: '&select'
         },
         controller: 'FacetTreeCtrl',
@@ -441,11 +483,11 @@ angular.module('ui.jassa.facet-value-list', [])
         
         var dataPromise = fetcher.fetchData(offset, pageSize);
 
-        Jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $rootScope).then(function(count) {
+        Jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $scope.$root, function(count) {
             $scope.pagination.totalItems = count;
         });
         
-        Jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $rootScope).then(function(items) {
+        Jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $scope.$root, function(items) {
             $scope.facetValues = items;
         });
 
@@ -715,8 +757,22 @@ angular.module('ui.jassa.sparql-table', [])
         tableService = tableService || createTableService();
         
         var promise = tableService.fetchCount();
+
+//        $q.when(promise).then(function(countInfo) {
+//            $scope.totalServerItems = countInfo.count;
+//        });
         
-        Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $rootScope).then(function(countInfo) {
+//        promise.done(function(countInfo) {
+//           $scope.totalServerItems = countInfo.count;
+//            
+//            if ($scope && !$scope.$root.$$phase) {
+//                $scope.$root.$apply();
+//            }
+//        });
+//
+        
+
+        Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(countInfo) {
             // Note: There is also countInfo.hasMoreItems and countInfo.limit (limit where the count was cut off)
             $scope.totalServerItems = countInfo.count;
         });
@@ -732,8 +788,22 @@ angular.module('ui.jassa.sparql-table', [])
 
         
         var promise = tableService.fetchData(pageSize, offset);
-        
-        Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $rootScope).then(function(data) {
+
+//        promise.done(function(data) {
+//            $scope.myData = data;
+//            
+//            if ($scope && !$scope.$root.$$phase) {
+//                $scope.$root.$apply();
+//            }
+//        });
+
+        /*
+        $q.when(promise).then(function(data) {
+            $scope.myData = data;
+        });
+        */
+
+        Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(data) {
             $scope.myData = data;
         });
     };
@@ -804,6 +874,49 @@ angular.module('ui.jassa.sparql-table', [])
 ;
     
 
+angular.module('ui.jassa.template-list', [])
+
+/**
+ *
+ */
+.controller('TemplateListCtrl', ['$scope', function($scope) {
+}])
+
+/**
+ *
+ */
+.directive('templateList', ['$compile', function($compile) {
+    return {
+        restrict: 'EA',
+        replace: true,
+        templateUrl: 'template/template-list/template-list.html',
+        transclude: true,
+        require: 'templateList',
+        scope: {
+            templates: '=',
+            data: '=',
+            context: '='
+        },
+        controller: 'TemplateListCtrl',
+        compile: function() {
+            return {
+                pre: function(scope, elm, attrs, controller) {
+                    angular.forEach(scope.templates, function(template) {
+                        var li = $compile('<li style="display: inline;"></li>')(scope);
+                        
+                        var element = $compile(template)(scope);
+                        li.append(element);
+                        
+                        elm.append(li);
+                    });
+                }
+            };
+        }
+    };
+}])
+
+;
+
 angular.module("template/constraint-list/constraint-list.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/constraint-list/constraint-list.html",
     "<ul>\n" +
@@ -836,7 +949,8 @@ angular.module("template/facet-tree/facet-dir-content.html", []).run(["$template
     "					total-items=\"dirset.childFacetCount\" page=\"dirset.pageIndex\"\n" +
     "					boundary-links=\"true\" rotate=\"false\"\n" +
     "					on-select-page=\"selectFacetPage(page, facet)\" first-text=\"<<\"\n" +
-    "					previous-text=\"<\" next-text=\">\" last-text=\">>\" />\n" +
+    "					previous-text=\"<\" next-text=\">\" last-text=\">>\">\n" +
+    "				</pagination>\n" +
     "			</div>\n" +
     "\n" +
     "		</form>\n" +
@@ -869,8 +983,7 @@ angular.module("template/facet-tree/facet-tree-item.html", []).run(["$templateCa
     "		<a data-rdf-term=\"{{facet.item.getNode().toString()}}\" title=\"{{facet.item.getNode().getUri()}}\" href=\"\" ng-click=\"toggleSelected(facet.item.getPath())\">{{facet.item.getNode().getUri()}}</a>\n" +
     "\n" +
     "\n" +
-    "		<a ng-visible=\"facet.isHovered || facet.table.isContained\" href=\"\" ng-click=\"toggleTableLink(facet.item.getPath())\"><span class=\"glyphicon glyphicon-list-alt\"></span></a>\n" +
-    "\n" +
+    "		<template-list style=\"list-style:none; display: inline; padding-left: 0px;\" templates=\"plugins\" data=\"facet\" context=\"pluginContext\"></template-list>\n" +
     "\n" +
     "		<span style=\"float: right\" class=\"badge\" ng-bind-html=\"(facet.item.getDistinctValueCount() == null || facet.item.getDistinctValueCount() < 0) ? '&#8230;' : ('' + facet.item.getDistinctValueCount())\"></span>	\n" +
     "	</div>\n" +
@@ -917,4 +1030,10 @@ angular.module("template/sparql-table/sparql-table.html", []).run(["$templateCac
     "<div ng-grid=\"gridOptions\"></div>\n" +
     "</div>\n" +
     "");
+}]);
+
+angular.module("template/template-list/template-list.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/template-list/template-list.html",
+    "<ul ng-show=\"templates.length > 0\">\n" +
+    "</ul>");
 }]);
