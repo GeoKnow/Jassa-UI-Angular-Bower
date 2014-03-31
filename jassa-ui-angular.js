@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.1-SNAPSHOT - 2014-03-30
+ * Version: 0.0.1-SNAPSHOT - 2014-04-01
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table","ui.jassa.template-list"]);
@@ -595,6 +595,10 @@ angular.module('ui.jassa.sparql-table', [])
 */
 
     var createNgGridOptionsFromQuery = function(query) {
+        if(!query) {
+            return [];
+        }
+        
         var projectVarList = query.getProjectVars().getVarList();
         var projectVarNameList = sparql.VarUtils.getVarNames(projectVarList);
 
@@ -625,6 +629,12 @@ angular.module('ui.jassa.sparql-table', [])
         },
         
         fetchCount: function() {
+            if(!this.query) {
+                var deferred = jQuery.Deferred();
+                deferred.resolve(0);
+                return deferred.promise();
+            }
+            
             var query = this.query.clone();
 
             query.setLimit(null);
@@ -646,6 +656,19 @@ angular.module('ui.jassa.sparql-table', [])
         },
         
         fetchData: function(limit, offset) {
+            if(!this.query) {
+                var deferred = jQuery.Deferred();
+
+                var itBinding = new util.IteratorArray([]);
+                var varNames = [];
+                var rs = new ns.ResultSetArrayIteratorBinding(itBinding, varNames);
+               
+                
+                deferred.resolve(rs);
+                return deferred.promise();
+            }
+
+            
             var query = this.query.clone();
 
             query.setLimit(limit);
@@ -686,8 +709,8 @@ angular.module('ui.jassa.sparql-table', [])
         getSchema: function() {
             var query = this.query;
 
-            var projectVarList = query.getProjectVars().getVarList();
-            var projectVarNameList = sparql.VarUtils.getVarNames(projectVarList);
+            //var projectVarList = query.getProjectVars().getVarList();
+            //var projectVarNameList = sparql.VarUtils.getVarNames(projectVarList);
 
             var colDefs = createNgGridOptionsFromQuery(query);
             
@@ -698,10 +721,12 @@ angular.module('ui.jassa.sparql-table', [])
 
     
     var createTableService = function() {
-        var sparqlService = $scope.sparqlService;
-        var queryFactory = $scope.config.queryFactory;
+        var config = $scope.config;
         
-        var query = queryFactory.createQuery();
+        var sparqlService = $scope.sparqlService;
+        var queryFactory = config ? config.queryFactory : null;
+        
+        var query = queryFactory ? queryFactory.createQuery() : null;
         
         var result = new service.SparqlTableService(sparqlService, query);
         
@@ -825,6 +850,7 @@ angular.module('ui.jassa.sparql-table', [])
         useExternalSorting: true,
         showFooter: true,
         totalServerItems: 'totalServerItems',
+        enableHighlighting: true,
         sortInfo: {
             fields: [],
             directions: [],
