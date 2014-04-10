@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.1-SNAPSHOT - 2014-04-03
+ * Version: 0.0.1-SNAPSHOT - 2014-04-11
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table","ui.jassa.template-list"]);
@@ -173,6 +173,17 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
         self.refresh();
     };
     
+    
+    $scope.setFacetHover = function(facet, isHovered) {
+        facet.isHovered = isHovered;
+        if(facet.incoming) {
+            facet.incoming.isHovered = isHovered;
+        }
+        
+        if(facet.outgoing) {
+            facet.outgoing.isHovered = isHovered;
+        }
+    };
 
     $scope.ObjectUtils = Jassa.util.ObjectUtils;
 
