@@ -2,11 +2,11 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.1-SNAPSHOT - 2014-04-11
+ * Version: 0.0.1-SNAPSHOT - 2014-04-16
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table","ui.jassa.template-list"]);
-angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/sparql-table/sparql-table.html","template/template-list/template-list.html"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table"]);
+angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/sparql-table/sparql-table.html"]);
 angular.module('ui.jassa.constraint-list', [])
 
 .controller('ConstraintListCtrl', ['$scope', '$rootScope', function($scope, $rootScope) {
@@ -911,49 +911,6 @@ angular.module('ui.jassa.sparql-table', [])
 ;
     
 
-angular.module('ui.jassa.template-list', [])
-
-/**
- *
- */
-.controller('TemplateListCtrl', ['$scope', function($scope) {
-}])
-
-/**
- *
- */
-.directive('templateList', ['$compile', function($compile) {
-    return {
-        restrict: 'EA',
-        replace: true,
-        templateUrl: 'template/template-list/template-list.html',
-        transclude: true,
-        require: 'templateList',
-        scope: {
-            templates: '=',
-            data: '=',
-            context: '='
-        },
-        controller: 'TemplateListCtrl',
-        compile: function() {
-            return {
-                pre: function(scope, elm, attrs, controller) {
-                    angular.forEach(scope.templates, function(template) {
-                        var li = $compile('<li style="display: inline;"></li>')(scope);
-                        
-                        var element = $compile(template)(scope);
-                        li.append(element);
-                        
-                        elm.append(li);
-                    });
-                }
-            };
-        }
-    };
-}])
-
-;
-
 angular.module("template/constraint-list/constraint-list.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/constraint-list/constraint-list.html",
     "<ul>\n" +
@@ -1084,10 +1041,4 @@ angular.module("template/sparql-table/sparql-table.html", []).run(["$templateCac
     "<div ng-grid=\"gridOptions\"></div>\n" +
     "</div>\n" +
     "");
-}]);
-
-angular.module("template/template-list/template-list.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("template/template-list/template-list.html",
-    "<ul ng-show=\"templates.length > 0\">\n" +
-    "</ul>");
 }]);
