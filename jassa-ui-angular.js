@@ -5,7 +5,7 @@
  * Version: 0.0.1-SNAPSHOT - 2014-04-16
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table"]);
+angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table","ui.jassa.template-list"]);
 angular.module('ui.jassa.constraint-list', [])
 
 .controller('ConstraintListCtrl', ['$scope', '$rootScope', function($scope, $rootScope) {
@@ -909,3 +909,46 @@ angular.module('ui.jassa.sparql-table', [])
 
 ;
     
+
+angular.module('ui.jassa.template-list', [])
+
+/**
+ *
+ */
+.controller('TemplateListCtrl', ['$scope', function($scope) {
+}])
+
+/**
+ *
+ */
+.directive('templateList', ['$compile', function($compile) {
+    return {
+        restrict: 'EA',
+        replace: true,
+        templateUrl: 'template/template-list/template-list.html',
+        transclude: true,
+        //require: 'templateList',
+        scope: {
+            templates: '=',
+            data: '=',
+            context: '='
+        },
+        controller: 'TemplateListCtrl',
+        compile: function() {
+            return {
+                pre: function(scope, elm, attrs) {
+                    angular.forEach(scope.templates, function(template) {
+                        var li = $compile('<li style="display: inline;"></li>')(scope);
+                        
+                        var element = $compile(template)(scope);
+                        li.append(element);
+                        
+                        elm.append(li);
+                    });
+                }
+            };
+        }
+    };
+}])
+
+;
