@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.1-SNAPSHOT - 2014-04-17
+ * Version: 0.0.1-SNAPSHOT - 2014-04-24
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table","ui.jassa.template-list"]);
@@ -610,9 +610,13 @@ angular.module('ui.jassa.sparql-table', [])
 
     
     $scope.$watch('gridOptions.sortInfo', function(sortInfo) {
-        var tableMod = $scope.config.tableMod;
+        var config = $scope.config;
 
-        syncTableMod(sortInfo, tableMod);
+        var tableMod = config ? config.tableMod : null;
+
+        if(tableMod != null) {
+            syncTableMod(sortInfo, tableMod);
+        }
         
         $scope.refreshData();
     }, true);
