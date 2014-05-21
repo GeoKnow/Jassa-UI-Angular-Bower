@@ -2,10 +2,10 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.1-SNAPSHOT - 2014-05-20
+ * Version: 0.0.1-SNAPSHOT - 2014-05-21
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.sparql-table","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-value-list","ui.jassa.resizable","ui.jassa.sparql-table","ui.jassa.template-list"]);
 angular.module('ui.jassa.constraint-list', [])
 
 .controller('ConstraintListCtrl', ['$scope', '$rootScope', function($scope, $rootScope) {
@@ -350,101 +350,11 @@ angular.module('ui.jassa.facet-value-list', [])
     
     var self = this;
 
-    var ns = {};
-    ns.FacetValueService = Class.create({
-        initialize: function(sparqlService, facetTreeConfig) {
-            this.sparqlService = sparqlService;
-            this.facetTreeConfig = facetTreeConfig;
-        },
-      
-        getFacetTreeConfig: function() {
-            return this.facetTreeConfig;
-        },
-        
-        createFacetValueFetcher: function(path, filterText) {
-
-            var facetConfig = this.facetTreeConfig.getFacetConfig();
-
-            var facetConceptGenerator = Jassa.facete.FaceteUtils.createFacetConceptGenerator(facetConfig);
-            var concept = facetConceptGenerator.createConceptResources(path, true);
-            var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
-            
-            var store = new Jassa.sponate.StoreFacade(this.sparqlService);
-            var labelMap = Jassa.sponate.SponateUtils.createDefaultLabelMap();
-            store.addMap(labelMap, 'labels');
-            labelsStore = store.labels;
-            
-            var criteria = {};
-            if(filterText) {
-                criteria = {$or: [
-                    {hiddenLabels: {$elemMatch: {id: {$regex: filterText, $options: 'i'}}}},
-                    {id: {$regex: filterText, $options: 'i'}}
-                ]};
-            }
-            var baseFlow = labelsStore.find(criteria).concept(concept, true);
-
-            var result = new ns.FacetValueFetcher(baseFlow, this.facetTreeConfig, path);
-            return result;
-        }
-    });
-
-    
-    ns.FacetValueFetcher = Class.create({
-                
-        initialize: function(baseFlow, facetTreeConfig, path) {
-            this.baseFlow = baseFlow;
-            this.facetTreeConfig = facetTreeConfig;
-            this.path = path;
-        },
-        
-        fetchCount: function() {
-            var countPromise = this.baseFlow.count();
-            return countPromise;
-        },
-        
-        fetchData: function(offset, limit) {
-            
-            var dataFlow = this.baseFlow.skip(offset).limit(limit);
-
-            var self = this;
-
-            var dataPromise = dataFlow.asList(true).pipe(function(docs) {
-                var path = self.path;
-                
-                var facetConfig = self.facetTreeConfig.getFacetConfig();
-                var constraintTaggerFactory = new Jassa.facete.ConstraintTaggerFactory(facetConfig.getConstraintManager());
-                
-                var tagger = constraintTaggerFactory.createConstraintTagger(path);
-                
-                var r = _(docs).map(function(doc) {
-                    // TODO Sponate must support retaining node objects
-                    //var node = rdf.NodeFactory.parseRdfTerm(doc.id);
-                    var node = doc.id;
-                    
-                    var label = doc.displayLabel ? doc.displayLabel : '' + doc.id;
-                    //console.log('displayLabel', label);
-                    var tmp = {
-                        displayLabel: label,
-                        path: path,
-                        node: node,
-                        tags: tagger.getTags(node)
-                    };
-
-                    return tmp;
-                    
-                });
-
-                return r;
-            });
-            
-            return dataPromise;
-        }
-    });
 
     var updateFacetTreeService = function() {
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig && $scope.path;
 
-        facetValueService = isConfigured ? new ns.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
+        facetValueService = isConfigured ? new Jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
     };
     
     var update = function() {
@@ -464,7 +374,7 @@ angular.module('ui.jassa.facet-value-list', [])
     $scope.toggleConstraint = function(item) {
         var constraintManager = facetValueService.getFacetTreeConfig().getFacetConfig().getConstraintManager();
         
-        var constraint = new Jassa.facete.ConstraintSpecPathValue(
+        var constraint = new facete.ConstraintSpecPathValue(
                 'equal',
                 item.path,
                 item.node);
@@ -557,6 +467,106 @@ angular.module('ui.jassa.facet-value-list', [])
 })
 
 ;
+
+angular.module('ui.jassa.resizable', [])
+
+/**
+ *
+ * <div resizable="resizableConfig" bounds="myBoundObject" on-resize-init="onResizeInit(bounds)" on-resize="onResize(evt, ui, bounds)" style="width: 50px; height: 50px;">
+ *
+ * On init, the the directive will invoke on-resize-init with the original css properties (not the computed values).
+ * This allows resetting the size
+ * Also, on init, the given bounds will be overridden, however, afterwards the directive will listen for changes
+ */
+.directive('resizable', function () {
+    //var resizableConfig = {...};
+    return {
+        restrict: 'A',
+        scope: {
+            resizable: '=',
+            onResize: '&onResize',
+            onResizeInit: '&onResizeInit',
+            bounds: '='
+        },
+        compile: function() {
+            return {
+                post: function(scope, elem, attrs) {
+                    if(!scope.bounds) {
+                        scope.bounds = {};
+                    }
+
+                    var isInitialized = false;
+
+                    var onConfigChange = function(newConfig) {
+                        //console.log('Setting config', newConfig);
+                        if(isInitialized) {
+                            jQuery(elem).resizable('destroy');
+                        }
+
+                        jQuery(elem).resizable(newConfig);
+                        
+                        isInitialized = true;
+                    };
+                    
+
+                    var propNames = ['top', 'bottom', 'width', 'height'];
+                    
+                    var getCssPropMap = function(propNames) {
+                        var data = elem.prop('style');
+                        var result = _(data).pick(propNames);
+                        
+                        return result;
+                    };
+                    
+                    var setCssPropMap = function(propMap) {
+                        _(propMap).each(function(v, k) {
+                            console.log('gaaa', k, v);
+                            elem.css(k, v);
+                        });
+                    };
+
+                    var bounds = getCssPropMap(propNames);
+                    angular.copy(bounds, scope.bounds);
+                    
+                    if(scope.onResizeInit) {
+                        scope.onResizeInit({
+                            bounds: bounds
+                        });
+                    }
+                    
+                    var onBoundsChange = function(newBounds, oldBounds) {
+                        //console.log('setting bounds', newBounds, oldBounds);
+                        setCssPropMap(newBounds);
+                    };
+                    
+                    scope.$watch('bounds', onBoundsChange, true);
+
+                    jQuery(elem).on('resizestop', function (evt, ui) {
+                        
+                        var bounds = getCssPropMap(propNames);
+                        angular.copy(bounds, scope.bounds);
+                        //console.log('sigh', bounds);
+                        
+                        if (scope.onResize) {
+                            scope.onResize(evt, ui, bounds);
+                        }
+                        
+                        if(!scope.$$phase) {
+                            scope.$apply();
+                        }
+                    });
+
+                    scope.$watch('resizable', onConfigChange);
+                    //onConfigChange(scope.resizable);
+                }
+            };
+        }
+    };
+})
+
+;
+
+
 
 angular.module('ui.jassa.sparql-table', [])
 
