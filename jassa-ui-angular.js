@@ -520,7 +520,7 @@ angular.module('ui.jassa.resizable', [])
                     
                     var setCssPropMap = function(propMap) {
                         _(propMap).each(function(v, k) {
-                            console.log('gaaa', k, v);
+                            //console.log('css prop', k, v);
                             elem.css(k, v);
                         });
                     };
