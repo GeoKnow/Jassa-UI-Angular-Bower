@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.3-SNAPSHOT - 2014-05-22
+ * Version: 0.0.3-SNAPSHOT - 2014-05-26
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.resizable","ui.jassa.sparql-table","ui.jassa.template-list"]);
@@ -361,7 +361,7 @@ angular.module('ui.jassa.facet-typeahead', [])
 
 
             var pathSpec = modelPathMapping.pathExpr(this.scope);
-            var path = FacetTypeAheadUtils.parsePathSpec(pathSpec);
+            var path = Jassa.facete.PathUtils.parsePathSpec(pathSpec);
             
             // Hack - the facetService should only depend on FacetConfig
             var tmp = fct.getFacetConfig();
@@ -392,7 +392,7 @@ angular.module('ui.jassa.facet-typeahead', [])
 
                 var val = rdf.NodeFactory.createPlainLiteral(valStr);
                 var pathSpec = item.pathExpr(self.$scope);
-                var path = FacetTypeAheadUtils.parsePathSpec(pathSpec);
+                var path = Jassa.facete.PathUtils.parsePathSpec(pathSpec);
 
 
                 var r = new Jassa.facete.ConstraintSpecPathValue('regex', path, val);
