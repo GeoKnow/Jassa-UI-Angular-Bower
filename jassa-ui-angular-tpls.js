@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.3-SNAPSHOT - 2014-05-26
+ * Version: 0.0.3-SNAPSHOT - 2014-05-27
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.resizable","ui.jassa.sparql-table","ui.jassa.template-list"]);
@@ -211,7 +211,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
             //console.log('scopefacets', $scope.facet);             
             var promise = $scope.facetTreeService.fetchFacetTree(startPath);
               
-            Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $rootScope).then(function(data) {
+            Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $rootScope, function(data) {
                 facetTreeTagger.applyTags(data);
                 $scope.facet = data;
             });
