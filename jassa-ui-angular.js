@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.3-SNAPSHOT - 2014-05-28
+ * Version: 0.0.3-SNAPSHOT - 2014-05-29
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-table","ui.jassa.template-list"]);
@@ -935,7 +935,13 @@ angular.module('ui.jassa.sparql-table', [])
 
     $scope.refresh = function() {
         var tableService = createTableService();
+
+        if($scope.disableRequests) {
+            $scope.myData = [];
+            return;
+        }
         
+
         $scope.refreshSchema(tableService);
         $scope.refreshPageCount(tableService);
         $scope.refreshData(tableService);
@@ -1029,6 +1035,7 @@ angular.module('ui.jassa.sparql-table', [])
         scope: {
             sparqlService: '=',
             config: '=',
+            disableRequests: '=',
             onSelect: '&select',
             onUnselect: '&unselect'
         },
