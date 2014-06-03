@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-06-03
+ * Version: 0.0.4-SNAPSHOT - 2014-06-04
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -874,9 +874,8 @@ angular.module('ui.jassa.sparql-grid', [])
 
     
     var syncTableMod = function(sortInfo, tableMod) {
-        util.ArrayUtils.clear(tableMod.getSortConditions());
         
-        
+        var newSortConditions = [];
         for(var i = 0; i < sortInfo.fields.length; ++i) {
             var columnId = sortInfo.fields[i];
             var dir = sortInfo.directions[i];
@@ -891,9 +890,18 @@ angular.module('ui.jassa.sparql-grid', [])
             
             if(d !== 0) {
                 var sortCondition = new facete.SortCondition(columnId, d);
-                tableMod.getSortConditions().push(sortCondition);
+                newSortConditions.push(sortCondition);
             }
         }
+
+        var oldSortConditions = tableMod.getSortConditions();
+        
+        var isTheSame = _(newSortConditions).isEqual(oldSortConditions);
+        if(!isTheSame) {
+            util.ArrayUtils.clear(oldSortConditions);
+            oldSortConditions.push.apply(oldSortConditions, newSortConditions);
+        }
+
     };
 
     
