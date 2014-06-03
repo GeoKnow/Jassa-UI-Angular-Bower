@@ -1009,7 +1009,11 @@ angular.module('ui.jassa.sparql-grid', [])
         var promise = tableService.fetchData(pageSize, offset);
 
         jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(data) {
-            util.ArrayUtils.replace($scope.myData, data);
+            var isTheSame = _(data).isEqual($scope.myData);
+            if(!isTheSame) {
+                $scope.myData = data;
+            }
+            //util.ArrayUtils.replace($scope.myData, data);
             
             // Using equals gives digest iterations exceeded errors; could be https://github.com/angular-ui/ng-grid/issues/873
             //$scope.myData = data;
