@@ -5,7 +5,7 @@
  * Version: 0.0.4-SNAPSHOT - 2014-06-03
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-table","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module('ui.jassa.constraint-list', [])
 
 .controller('ConstraintListCtrl', ['$scope', '$rootScope', function($scope, $rootScope) {
@@ -44,7 +44,7 @@ angular.module('ui.jassa.constraint-list', [])
 
         var result;
         switch(type) {
-        case 'equal':
+        case 'equals':
             var pathStr = ''  + constraint.getDeclaredPath();
             if(pathStr === '') {
                 pathStr = '()';
@@ -860,9 +860,9 @@ angular.module('ui.jassa.resizable', [])
 
 
 
-angular.module('ui.jassa.sparql-table', [])
+angular.module('ui.jassa.sparql-grid', [])
 
-.controller('SparqlTableCtrl', ['$scope', '$rootScope', '$q', function($scope, $rootScope, $q) {
+.controller('SparqlGridCtrl', ['$scope', '$rootScope', '$q', function($scope, $rootScope, $q) {
 
     var rdf = Jassa.rdf;
     var sparql = Jassa.sparql;
@@ -1044,13 +1044,13 @@ angular.module('ui.jassa.sparql-table', [])
  * }
  * 
  */
-.directive('sparqlTable', ['$parse', function($parse) {
+.directive('sparqlGrid', ['$parse', function($parse) {
     return {
         restrict: 'EA', // says that this directive is only for html elements
         replace: true,
         //template: '<div></div>',
-        templateUrl: 'template/sparql-table/sparql-table.html',
-        controller: 'SparqlTableCtrl',
+        templateUrl: 'template/sparql-grid/sparql-grid.html',
+        controller: 'SparqlGridCtrl',
         scope: {
             sparqlService: '=',
             config: '=',
