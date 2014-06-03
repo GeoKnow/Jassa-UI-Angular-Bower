@@ -873,6 +873,7 @@ angular.module('ui.jassa.sparql-grid', [])
 
     
     var syncTableMod = function(sortInfo, tableMod) {
+        /*
         util.ArrayUtils.clear(tableMod.getSortConditions());
         
         
@@ -893,6 +894,7 @@ angular.module('ui.jassa.sparql-grid', [])
                 tableMod.getSortConditions().push(sortCondition);
             }
         }
+        */
     };
 
     
