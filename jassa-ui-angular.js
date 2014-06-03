@@ -864,12 +864,12 @@ angular.module('ui.jassa.sparql-grid', [])
 
 .controller('SparqlGridCtrl', ['$scope', '$rootScope', '$q', function($scope, $rootScope, $q) {
 
-    var rdf = Jassa.rdf;
-    var sparql = Jassa.sparql;
-    var service = Jassa.service;
-    var util = Jassa.util;
+    var rdf = jassa.rdf;
+    var sparql = jassa.sparql;
+    var service = jassa.service;
+    var util = jassa.util;
     
-    var sponate = Jassa.sponate;
+    var sponate = jassa.sponate;
 
     
     var syncTableMod = function(sortInfo, tableMod) {
@@ -897,8 +897,7 @@ angular.module('ui.jassa.sparql-grid', [])
         
         var isTheSame = _(newSortConditions).isEqual(oldSortConditions);
         if(!isTheSame) {
-            util.ArrayUtils.clear(oldSortConditions);
-            oldSortConditions.push.apply(oldSortConditions, newSortConditions);
+            util.ArrayUtils.replace(oldSortConditions, newSortConditions);
         }
 
     };
@@ -964,7 +963,7 @@ angular.module('ui.jassa.sparql-grid', [])
         var tableService = createTableService();
 
         if($scope.disableRequests) {
-            $scope.myData = [];
+            util.ArrayUtils.clear($scope.myData);
             return;
         }
         
@@ -991,7 +990,7 @@ angular.module('ui.jassa.sparql-grid', [])
         
         var promise = tableService.fetchCount();
 
-        Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(countInfo) {
+        jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(countInfo) {
             // Note: There is also countInfo.hasMoreItems and countInfo.limit (limit where the count was cut off)
             $scope.totalServerItems = countInfo.count;
         });
@@ -1008,8 +1007,11 @@ angular.module('ui.jassa.sparql-grid', [])
         
         var promise = tableService.fetchData(pageSize, offset);
 
-        Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(data) {
-            $scope.myData = data;
+        jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(data) {
+            util.ArrayUtils.replace($scope.myData, data);
+            
+            // Using equals gives digest iterations exceeded errors; could be https://github.com/angular-ui/ng-grid/issues/873
+            //$scope.myData = data;
         });
     };
 
