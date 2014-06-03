@@ -873,7 +873,6 @@ angular.module('ui.jassa.sparql-grid', [])
 
     
     var syncTableMod = function(sortInfo, tableMod) {
-        /*
         util.ArrayUtils.clear(tableMod.getSortConditions());
         
         
@@ -894,7 +893,6 @@ angular.module('ui.jassa.sparql-grid', [])
                 tableMod.getSortConditions().push(sortCondition);
             }
         }
-        */
     };
 
     
@@ -971,7 +969,13 @@ angular.module('ui.jassa.sparql-grid', [])
     $scope.refreshSchema = function(tableService) {
         tableService = tableService || createTableService();
 
-        $scope.colDefs = tableService.getSchema();
+        var oldSchema = $scope.colDefs;
+        var newSchema = tableService.getSchema();
+        
+        var isTheSame = _(newSchema).isEqual(oldSchema);
+        if(!isTheSame) {
+            $scope.colDefs = newSchema;
+        }
     };
 
     $scope.refreshPageCount = function(tableService) {
@@ -1033,7 +1037,7 @@ angular.module('ui.jassa.sparql-grid', [])
 
     
 
-    $scope.refresh();
+    //$scope.refresh();
 }])
 
 
