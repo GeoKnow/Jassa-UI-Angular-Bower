@@ -28,10 +28,15 @@ angular.module('ui.jassa.constraint-list', [])
 
     $scope.ObjectUtils = Jassa.util.ObjectUtils;
 
-    var watchList = '[ObjectUtils.hashCode(sparqlService), ObjectUtils.hashCode(facetTreeConfig)]';
+    var watchList = '[ObjectUtils.hashCode(facetTreeConfig)]';
     $scope.$watch(watchList, function() {
 		update();
 	}, true);
+    
+    $scope.$watch('sparqlService', function() {
+        update();
+    });
+    
     
     
     var renderConstraint = function(constraint) {
@@ -187,11 +192,15 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
     $scope.ObjectUtils = Jassa.util.ObjectUtils;
 
-    var watchList = '[ObjectUtils.hashCode(sparqlService), ObjectUtils.hashCode(facetTreeConfig)]';
+    var watchList = '[ObjectUtils.hashCode(facetTreeConfig)]';
     $scope.$watch(watchList, function() {
         update();
     }, true);
-                  
+    
+    $scope.$watch('sparqlService', function() {
+        update();
+    });
+    
       
     $scope.doFilter = function(path, filterString) {
         $scope.facetTreeConfig.getPathToFilterString().put(path, filterString);
@@ -383,7 +392,7 @@ angular.module('ui.jassa.facet-typeahead', [])
             // Compile constraints
             var self = this;
             
-            var constraintSpecs = _(idToModelPathMapping).map(function(item) {
+            var constraints = _(idToModelPathMapping).map(function(item) {
                 var valStr = item.modelExpr(self.$scope);
                 if(!valStr || valStr.trim() === '') {
                     return null;
@@ -394,13 +403,13 @@ angular.module('ui.jassa.facet-typeahead', [])
                 var path = Jassa.facete.PathUtils.parsePathSpec(pathSpec);
 
 
-                var r = new Jassa.facete.ConstraintSpecPathValue('regex', path, val);
+                var r = new Jassa.facete.ConstraintRegex(path, val);
                 return r;
             });
             
-            constraintSpecs = _(constraintSpecs).compact();
+            constraints = _(constraints).compact();
             
-            _(constraintSpecs).each(function(constraint) {
+            _(constraints).each(function(constraint) {
                 cmClone.addConstraint(constraint);
             });
 
@@ -590,20 +599,21 @@ angular.module('ui.jassa.facet-value-list', [])
 
     $scope.ObjectUtils = Jassa.util.ObjectUtils;
 
-    var watchList = '[ObjectUtils.hashCode(sparqlService), ObjectUtils.hashCode(facetTreeConfig), "" + path, pagination.currentPage]';
+    var watchList = '[ObjectUtils.hashCode(facetTreeConfig), "" + path, pagination.currentPage]';
     $scope.$watch(watchList, function() {
         update();
     }, true);
-                  
+    
+    $scope.$watch('sparqlService', function() {
+        update();
+    });
+    
 
 
     $scope.toggleConstraint = function(item) {
         var constraintManager = facetValueService.getFacetTreeConfig().getFacetConfig().getConstraintManager();
         
-        var constraint = new Jassa.facete.ConstraintSpecPathValue(
-                'equal',
-                item.path,
-                item.node);
+        var constraint = new Jassa.facete.ConstraintEquals(item.path, item.node);
 
         // TODO Integrate a toggle constraint method into the filterManager
         constraintManager.toggleConstraint(constraint);
@@ -917,13 +927,22 @@ angular.module('ui.jassa.sparql-table', [])
     $scope.$watch('[pagingOptions, filterOptions]', function (newVal, oldVal) {
         $scope.refreshData();
     }, true);
-        
+    
+    var update = function() {
+        $scope.refresh();
+    };
+    
+    
     $scope.ObjectUtils = util.ObjectUtils;
     
-    $scope.$watch('[ObjectUtils.hashCode(sparqlService), ObjectUtils.hashCode(config), disableRequests]', function (newVal, oldVal) {
-        $scope.refresh();
+    $scope.$watch('[ObjectUtils.hashCode(config), disableRequests]', function (newVal, oldVal) {
+        update();
     }, true);
-
+    
+    $scope.$watch('sparqlService', function() {
+        update();
+    });
+    
     
     $scope.totalServerItems = 0;
         
