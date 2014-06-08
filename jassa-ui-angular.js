@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-06-05
+ * Version: 0.0.4-SNAPSHOT - 2014-06-08
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -589,7 +589,7 @@ angular.module('ui.jassa.facet-value-list', [])
     var updateFacetTreeService = function() {
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig && $scope.path;
 
-        facetValueService = isConfigured ? new jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
+        facetValueService = isConfigured ? new Jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
     };
     
     var update = function() {
@@ -597,7 +597,7 @@ angular.module('ui.jassa.facet-value-list', [])
         self.refresh();
     };
 
-    $scope.ObjectUtils = jassa.util.ObjectUtils;
+    $scope.ObjectUtils = Jassa.util.ObjectUtils;
 
     var watchList = '[ObjectUtils.hashCode(facetTreeConfig), "" + path, pagination.currentPage]';
     $scope.$watch(watchList, function() {
@@ -613,7 +613,7 @@ angular.module('ui.jassa.facet-value-list', [])
     $scope.toggleConstraint = function(item) {
         var constraintManager = facetValueService.getFacetTreeConfig().getFacetConfig().getConstraintManager();
         
-        var constraint = new jassa.facete.ConstraintEquals(item.path, item.node);
+        var constraint = new Jassa.facete.ConstraintEquals(item.path, item.node);
 
         // TODO Integrate a toggle constraint method into the filterManager
         constraintManager.toggleConstraint(constraint);
@@ -639,11 +639,11 @@ angular.module('ui.jassa.facet-value-list', [])
         
         var dataPromise = fetcher.fetchData(offset, pageSize);
 
-        jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $scope.$root, function(count) {
+        Jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $scope.$root, function(count) {
             $scope.pagination.totalItems = count;
         });
         
-        jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $scope.$root, function(items) {
+        Jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $scope.$root, function(items) {
             $scope.facetValues = items;
         });
 
