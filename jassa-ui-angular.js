@@ -2,13 +2,13 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-06-26
+ * Version: 0.0.4-SNAPSHOT - 2014-06-29
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module('ui.jassa.constraint-list', [])
 
-.controller('ConstraintListCtrl', ['$scope', '$rootScope', function($scope, $rootScope) {
+.controller('ConstraintListCtrl', ['$scope', '$q', '$rootScope', function($scope, $q, $rootScope) {
 
     var self = this;
 
@@ -37,6 +37,9 @@ angular.module('ui.jassa.constraint-list', [])
         update();
     });
     
+    $scope.$watch('labelService', function() {
+        update();
+    });
     
     
     var renderConstraint = function(constraint) {
@@ -61,25 +64,25 @@ angular.module('ui.jassa.constraint-list', [])
     self.refresh = function() {
 
         var constraintManager = $scope.constraintManager;
-        
-        var items;
-        if(!constraintManager) {
-            items = [];
-        }
-        else {
-            var constraints = constraintManager.getConstraints();
-            
-            items =_(constraints).map(function(constraint) {
+        var constraints = constraintManager ? constraintManager.getConstraints() : [];
+
+        var promise = $scope.constraintService.lookup(constraints);
+
+        jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(map) {
+
+            var items =_(constraints).map(function(constraint) {
+                var label = map.get(constraint);
+
                 var r = {
                     constraint: constraint,
-                    label: '' + renderConstraint(constraint)
+                    label: label
                 };
                 
                 return r;
             });
-        }
 
-        $scope.constraints = items;
+            $scope.constraints = items;
+        });
     };
     
     $scope.removeConstraint = function(item) {
@@ -105,6 +108,7 @@ angular.module('ui.jassa.constraint-list', [])
         require: 'constraintList',
         scope: {
             sparqlService: '=',
+            labelService: '=',
             facetTreeConfig: '=',
             onSelect: '&select'
         },
