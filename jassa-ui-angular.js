@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-07-10
+ * Version: 0.0.4-SNAPSHOT - 2014-07-30
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -66,7 +66,7 @@ angular.module('ui.jassa.constraint-list', [])
         var constraintManager = $scope.constraintManager;
         var constraints = constraintManager ? constraintManager.getConstraints() : [];
 
-        var promise = $scope.labelService.lookup(constraints);
+        var promise = jassa.service.LookupServiceUtils.lookup($scope.labelService, constraints);
 
         jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(map) {
 
