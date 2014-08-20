@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-08-19
+ * Version: 0.0.4-SNAPSHOT - 2014-08-20
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -1156,7 +1156,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
@@ -1211,7 +1210,8 @@ angular.module("template/facet-tree/facet-tree-item.html", []).run(["$templateCa
   $templateCache.put("template/facet-tree/facet-tree-item.html",
     "<div ng-class=\"{'frame': facet.isExpanded}\">\n" +
     "\n" +
-    "	<div class=\"facet-row\" ng-class=\"{'highlite': facet.isExpanded}\" ng-mouseover=\"setFacetHover(facet, true)\" ng-mouseleave=\"setFacetHover(facet, false)\">\n" +
+    "<!--	<div class=\"facet-row\" ng-class=\"{'highlite': facet.isExpanded}\" ng-mouseover=\"setFacetHover(facet, true)\" ng-mouseleave=\"setFacetHover(facet, false)\"> -->\n" +
+    "	<div class=\"facet-row\" ng-class=\"{'highlite': facet.isExpanded}\">\n" +
     "		<a ng-show=\"facet.isExpanded\" href=\"\" ng-click=\"toggleCollapsed(facet.item.getPath())\"><span class=\"glyphicon glyphicon-chevron-down\"></span></a>\n" +
     "		<a ng-show=\"!facet.isExpanded\" href=\"\" ng-click=\"toggleCollapsed(facet.item.getPath())\"><span class=\"glyphicon glyphicon-chevron-right\"></span></a>\n" +
     "\n" +
