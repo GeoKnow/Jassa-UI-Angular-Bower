@@ -2,11 +2,39 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-09-04
+ * Version: 0.0.4-SNAPSHOT - 2014-09-08
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
+angular.module('ui.jassa.auto-focus', [])
+
+// Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
+.directive('autoFocus', function($timeout, $parse) {
+    return {
+        link: function(scope, element, attrs) {
+            var model = $parse(attrs.focusMe);
+            scope.$watch(model, function(value) {
+                console.log('value=',value);
+                if(value === true) {
+                    $timeout(function() {
+                         element[0].focus();
+                    });
+                }
+            });
+            // to address @blesh's comment, set attribute value to 'false'
+            // on blur event:
+            element.bind('blur', function() {
+                console.log('blur');
+                scope.$apply(model.assign(scope, false));
+            });
+        }
+    };
+})
+
+;
+
+
 angular.module('ui.jassa.constraint-list', [])
 
 .controller('ConstraintListCtrl', ['$scope', '$q', '$rootScope', function($scope, $q, $rootScope) {
@@ -246,7 +274,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
     };
       
     $scope.selectIncoming = function(path) {
-        console.log('Incoming selected at path ' + path);
+        //console.log('Incoming selected at path ' + path);
         if($scope.facetTreeConfig) {
             var val = $scope.facetTreeConfig.getExpansionMap().get(path);
             if(val != 2) {
@@ -257,7 +285,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
     };
       
     $scope.selectOutgoing = function(path) {
-        console.log('Outgoing selected at path ' + path);
+        //console.log('Outgoing selected at path ' + path);
         if($scope.facetTreeConfig) {
             var val = $scope.facetTreeConfig.getExpansionMap().get(path);
             if(val != 1) {
