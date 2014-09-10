@@ -2,10 +2,10 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-09-08
+ * Version: 0.0.4-SNAPSHOT - 2014-09-11
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -30,6 +30,47 @@ angular.module('ui.jassa.auto-focus', [])
         }
     };
 })
+
+;
+
+
+angular.module('ui.jassa.blurify', [])
+
+/**
+ * Replaces text content with an alternative on blur
+ * blurify="(function(model) { return 'displayValue'; })"
+ *
+ */
+.directive('blurify', [ '$parse', function($parse) {
+    return {
+        require: 'ngModel',
+        restrict: 'A',
+        link: function($scope, element, attrs, model) {
+            element.on('focus', function () {
+                // Re-render the model on focus
+                model.$render();
+            });
+            element.on('blur', function () {
+                var modelVal = $parse(attrs['ngModel'])($scope);
+                var labelFn = $parse(attrs['blurify'])($scope);
+
+                if(labelFn) {
+                    var val = labelFn(modelVal);
+                    if(val.then) {
+                        val.then(function(label) {
+                            element.val(label);
+                        });
+                    } else {
+                        element.val(val);
+                    }
+                }
+//              $scope.$apply(function() {
+//                  model.$setViewValue(val);
+//              });
+            });
+        }
+    };
+}])
 
 ;
 
