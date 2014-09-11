@@ -5,7 +5,7 @@
  * Version: 0.0.4-SNAPSHOT - 2014-09-11
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.lang-select","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -776,6 +776,85 @@ angular.module('ui.jassa.facet-value-list', [])
 })
 
 ;
+
+angular.module('ui.jassa.lang-select', ['ui.sortable', 'ui.keypress', 'ngSanitize'])
+
+.controller('LangSelectCtrl', ['$scope', function($scope) {
+    $scope.newLang = '';
+    $scope.showLangInput = false;
+
+    var removeIntent = false;
+
+    $scope.sortConfig = {
+        placeholder: 'lang-sortable-placeholder',
+        receive: function(e, ui) { removeIntent = false; },
+        over: function(e, ui) { removeIntent = false; },
+        out: function(e, ui) { removeIntent = true; },
+        beforeStop: function(e, ui) {
+            if (removeIntent === true) {
+                var lang = ui.item.context.textContent;
+                if(lang) {
+                    lang = lang.trim();
+                    var i = $scope.langs.indexOf(lang);
+                    $scope.langs.splice(i, 1);
+                    ui.item.remove();
+                }
+            }
+        },
+        stop: function() {
+            if(!$scope.$$phase) {
+                $scope.$apply();
+            }
+        }
+    };
+
+    $scope.getLangSuggestions = function() {
+        var obj = $scope.availableLangs;
+
+        console.log(obj);
+        var result;
+        if(!obj) {
+            result = [];
+        }
+        else if(Array.isArray(obj)) {
+            result = obj;
+        }
+        else if(obj instanceof Function) {
+            result = obj();
+        }
+        else {
+            result = [];
+        }
+
+        return result;
+    };
+
+    $scope.confirmAddLang = function(lang) {
+
+        var i = $scope.langs.indexOf(lang);
+        if(i < 0) {
+            $scope.langs.push(lang);
+        }
+        $scope.showLangInput = false;
+        $scope.newLang = '';
+    };
+}])
+
+.directive('langSelect', function() {
+    return {
+        restrict: 'EA',
+        replace: true,
+        templateUrl: 'lang-select.html',
+        scope: {
+            langs: '=',
+            availableLangs: '='
+        },
+        controller: 'LangSelectCtrl',
+    };
+})
+
+;
+
 
 angular.module('ui.jassa.pointer-events-scroll-fix', [])
 
