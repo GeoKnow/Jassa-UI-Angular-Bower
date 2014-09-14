@@ -2,11 +2,11 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-09-11
+ * Version: 0.0.4-SNAPSHOT - 2014-09-14
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.lang-select","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
-angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/lang-select/lang-select.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -856,6 +856,33 @@ angular.module('ui.jassa.lang-select', ['ui.sortable', 'ui.keypress', 'ngSanitiz
 ;
 
 
+angular.module('ui.jassa.list-search', [])
+
+.controller('ListSearchCtrl', ['$scope', function($scope) {
+    // Don't ask me why this assignment does not trigger a digest
+    // if performed inline in the directive...
+    $scope.setActiveSearchMode = function(searchMode) {
+        $scope.activeSearchMode = searchMode;
+    };
+}])
+
+.directive('listSearch', function() {
+    return {
+        restrict: 'EA',
+        scope: {
+            searchModes: '=',
+            activeSearchMode: '=',
+            ngModel: '=',
+            onSubmit: '&submit'
+        },
+        controller: 'ListSearchCtrl',
+        templateUrl: 'template/list-search/list-search.html'
+    };
+})
+
+;
+
+
 angular.module('ui.jassa.pointer-events-scroll-fix', [])
 
 /**
@@ -1436,6 +1463,34 @@ angular.module("template/lang-select/lang-select.html", []).run(["$templateCache
     "        <button type=\"button\" ng-show=\"!showLangInput\" style=\"cursor: pointer;\" class=\"btn label label-primary\" ng-click=\"showLangInput=true; focusLangInput=true\"><span class=\"glyphicon glyphicon-plus\"></span></button>\n" +
     "    </li>\n" +
     "<ul>\n" +
+    "\n" +
+    "");
+}]);
+
+angular.module("template/list-search/list-search.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/list-search/list-search.html",
+    "<form role=\"form\" ng-submit=\"onSubmit()\" novalidate>\n" +
+    "    <div class=\"form-group\">\n" +
+    "        <div class=\"input-group\">\n" +
+    "            <input\n" +
+    "                ng-model=\"ngModel\"\n" +
+    "                type=\"text\"\n" +
+    "                class=\"form-control\"\n" +
+    "                placeholder=\"Find ...\">\n" +
+    "\n" +
+    "            <div class=\"input-group-btn\">\n" +
+    "                <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">{{activeSearchMode.label}} <span class=\"caret\"></span></button>\n" +
+    "                <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n" +
+    "                    <li ng-repeat=\"searchMode in searchModes\"><a ng-click=\"setActiveSearchMode(searchMode)\" href=\"#\"><span bind-html-unsafe=\"searchMode.label\"></span></a></li>\n" +
+    "                </ul>\n" +
+    "            </div>\n" +
+    "\n" +
+    "            <span class=\"input-group-btn\">\n" +
+    "                <button type=\"submit\" class=\"btn btn-default\" type=\"button\"><span class=\"glyphicon glyphicon-search\"></span></button>\n" +
+    "            </span>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "</form>\n" +
     "\n" +
     "");
 }]);

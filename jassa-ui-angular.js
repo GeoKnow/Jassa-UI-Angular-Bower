@@ -2,10 +2,10 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-09-11
+ * Version: 0.0.4-SNAPSHOT - 2014-09-14
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.lang-select","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -849,6 +849,33 @@ angular.module('ui.jassa.lang-select', ['ui.sortable', 'ui.keypress', 'ngSanitiz
             availableLangs: '='
         },
         controller: 'LangSelectCtrl',
+    };
+})
+
+;
+
+
+angular.module('ui.jassa.list-search', [])
+
+.controller('ListSearchCtrl', ['$scope', function($scope) {
+    // Don't ask me why this assignment does not trigger a digest
+    // if performed inline in the directive...
+    $scope.setActiveSearchMode = function(searchMode) {
+        $scope.activeSearchMode = searchMode;
+    };
+}])
+
+.directive('listSearch', function() {
+    return {
+        restrict: 'EA',
+        scope: {
+            searchModes: '=',
+            activeSearchMode: '=',
+            ngModel: '=',
+            onSubmit: '&submit'
+        },
+        controller: 'ListSearchCtrl',
+        templateUrl: 'template/list-search/list-search.html'
     };
 })
 
