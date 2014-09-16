@@ -780,7 +780,7 @@ angular.module('ui.jassa.facet-value-list', [])
 angular.module('ui.jassa.jassa-media-list', [])
 
 .controller('JassaMediaListCtrl', ['$scope', '$q', function($scope, $q) {
-    $scope.currentPage = 1;
+    //$scope.currentPage = 1;
 
     $scope.doRefresh = function() {
         $q.when($scope.listService.fetchCount($scope.filter)).then(function(countInfo) {
@@ -825,6 +825,8 @@ angular.module('ui.jassa.jassa-media-list', [])
         },
         controller: 'JassaMediaListCtrl',
         link: function(scope, element, attrs, ctrl, transcludeFn) {
+            scope.currentPage = 1;
+
             transcludeFn(scope, function(clone, scope) {
                 var e = element.find('ng-transclude');
                 var p = e.parent();
