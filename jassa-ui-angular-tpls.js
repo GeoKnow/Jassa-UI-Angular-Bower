@@ -781,6 +781,8 @@ angular.module('ui.jassa.facet-value-list', [])
 angular.module('ui.jassa.jassa-media-list', [])
 
 .controller('JassaMediaListCtrl', ['$scope', '$q', function($scope, $q) {
+    $scope.currentPage = 1;
+
     $scope.doRefresh = function() {
         $q.when($scope.listService.fetchCount($scope.filter)).then(function(countInfo) {
             $scope.totalItems = countInfo.count;
@@ -1388,7 +1390,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
