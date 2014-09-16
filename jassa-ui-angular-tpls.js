@@ -5,8 +5,8 @@
  * Version: 0.0.4-SNAPSHOT - 2014-09-16
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
-angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -778,6 +778,58 @@ angular.module('ui.jassa.facet-value-list', [])
 
 ;
 
+angular.module('ui.jassa.facet-typeahead', [])
+
+.controller('JassaMediaListCtrl', ['$scope', '$q', function($scope, $q) {
+    $scope.doRefresh = function() {
+        $q.when($scope.listService.fetchCount($scope.filter)).then(function(countInfo) {
+            $scope.totalItems = countInfo.count;
+        });
+
+        $q.when($scope.listService.fetchItems($scope.filter, $scope.limit, $scope.offset)).then(function(items) {
+            $scope.items = items.map(function(item) {
+                return item.val;
+            });
+        });
+    };
+
+    $scope.$watch('currentPage', function() {
+        $scope.offset = ($scope.currentPage - 1) * $scope.limit;
+    });
+
+    $scope.$watch('[offset, totalItems, filter, refresh]', $scope.doRefresh, true);
+}])
+
+.directive('jassaMediaList', [function() {
+    return {
+        restrict: 'EA',
+        templateUrl: 'template/jassa-media-list/jassa-media-list.html',
+        transclude: true,
+        replace: true,
+        scope: {
+            listService: '=',
+            filter: '=',
+            limit: '=',
+            offset: '=',
+            totalItems: '=',
+            currentPage: '=',
+            items: '=',
+            refresh: '=' // Extra attribute that is deep watched on changes for triggering refreshs
+        },
+        controller: 'JassaMediaListCtrl',
+        link: function(scope, element, attrs, ctrl, transcludeFn) {
+            transcludeFn(scope, function(clone, scope) {
+                var e = element.find('ng-transclude');
+                var p = e.parent();
+                e.remove();
+                p.append(clone);
+            });
+        }
+    };
+}])
+
+;
+
 angular.module('ui.jassa.lang-select', ['ui.sortable', 'ui.keypress', 'ngSanitize'])
 
 .controller('LangSelectCtrl', ['$scope', function($scope) {
@@ -1330,7 +1382,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
@@ -1440,6 +1491,47 @@ angular.module("template/facet-value-list/facet-value-list.html", []).run(["$tem
     "              </tr>\n" +
     "      	</table>\n" +
     "  		<pagination class=\"pagination-small\" total-items=\"pagination.totalItems\" page=\"pagination.currentPage\" max-size=\"pagination.maxSize\" boundary-links=\"true\" rotate=\"false\" num-pages=\"pagination.numPages\" previous-text=\"&lsaquo;\" next-text=\"&rsaquo;\" first-text=\"&laquo;\" last-text=\"&raquo;\"></pagination>\n" +
+    "</div>\n" +
+    "");
+}]);
+
+angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/jassa-media-list/jassa-media-list.html",
+    "<div style=\"width: 100%\">\n" +
+    "\n" +
+    "    <div style=\"width: 100%; text-align: center\">\n" +
+    "        <pagination\n" +
+    "            ng-show=\"items.length\"\n" +
+    "            class=\"pagination\" max-size=\"7\"\n" +
+    "            total-items=\"totalItems\"\n" +
+    "            page=\"currentPage\"\n" +
+    "            boundary-links=\"true\"\n" +
+    "            rotate=\"false\"\n" +
+    "            first-text=\"&lt;&lt;\"\n" +
+    "            previous-text=\"&lt;\"\n" +
+    "            next-text=\"&gt;\"\n" +
+    "            last-text=\"&gt;&gt;\">\n" +
+    "        </pagination>\n" +
+    "    </div>\n" +
+    "\n" +
+    "    <ul class=\"media-list\" style=\"width: 100%;\">\n" +
+    "        <ng-transclude></ng-transclude>\n" +
+    "    </ul>\n" +
+    "\n" +
+    "    <div style=\"width: 100%; text-align: center\">\n" +
+    "        <pagination\n" +
+    "            ng-show=\"items.length\"\n" +
+    "            class=\"pagination\" max-size=\"7\"\n" +
+    "            total-items=\"totalItems\"\n" +
+    "            page=\"currentPage\"\n" +
+    "            boundary-links=\"true\"\n" +
+    "            rotate=\"false\"\n" +
+    "            first-text=\"&lt;&lt;\"\n" +
+    "            previous-text=\"&lt;\"\n" +
+    "            next-text=\"&gt;\"\n" +
+    "            last-text=\"&gt;&gt;\">\n" +
+    "        </pagination>\n" +
+    "    </div>\n" +
     "</div>\n" +
     "");
 }]);

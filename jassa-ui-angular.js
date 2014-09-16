@@ -5,7 +5,7 @@
  * Version: 0.0.4-SNAPSHOT - 2014-09-16
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -774,6 +774,58 @@ angular.module('ui.jassa.facet-value-list', [])
 //        }
     };
 })
+
+;
+
+angular.module('ui.jassa.facet-typeahead', [])
+
+.controller('JassaMediaListCtrl', ['$scope', '$q', function($scope, $q) {
+    $scope.doRefresh = function() {
+        $q.when($scope.listService.fetchCount($scope.filter)).then(function(countInfo) {
+            $scope.totalItems = countInfo.count;
+        });
+
+        $q.when($scope.listService.fetchItems($scope.filter, $scope.limit, $scope.offset)).then(function(items) {
+            $scope.items = items.map(function(item) {
+                return item.val;
+            });
+        });
+    };
+
+    $scope.$watch('currentPage', function() {
+        $scope.offset = ($scope.currentPage - 1) * $scope.limit;
+    });
+
+    $scope.$watch('[offset, totalItems, filter, refresh]', $scope.doRefresh, true);
+}])
+
+.directive('jassaMediaList', [function() {
+    return {
+        restrict: 'EA',
+        templateUrl: 'template/jassa-media-list/jassa-media-list.html',
+        transclude: true,
+        replace: true,
+        scope: {
+            listService: '=',
+            filter: '=',
+            limit: '=',
+            offset: '=',
+            totalItems: '=',
+            currentPage: '=',
+            items: '=',
+            refresh: '=' // Extra attribute that is deep watched on changes for triggering refreshs
+        },
+        controller: 'JassaMediaListCtrl',
+        link: function(scope, element, attrs, ctrl, transcludeFn) {
+            transcludeFn(scope, function(clone, scope) {
+                var e = element.find('ng-transclude');
+                var p = e.parent();
+                e.remove();
+                p.append(clone);
+            });
+        }
+    };
+}])
 
 ;
 
