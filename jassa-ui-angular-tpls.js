@@ -1330,7 +1330,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
@@ -1478,15 +1477,15 @@ angular.module("template/list-search/list-search.html", []).run(["$templateCache
     "                class=\"form-control\"\n" +
     "                placeholder=\"Find ...\">\n" +
     "\n" +
-    "            <div class=\"input-group-btn no-border-radius margin-left-1\">\n" +
-    "                <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">{{activeSearchMode.label}} <span class=\"caret\"></span></button>\n" +
+    "            <div class=\"input-group-btn\">\n" +
+    "                <button type=\"button\" class=\"btn btn-default dropdown-toggle no-border-radius margin-left-1\" data-toggle=\"dropdown\">{{activeSearchMode.label}} <span class=\"caret\"></span></button>\n" +
     "                <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n" +
     "                    <li ng-repeat=\"searchMode in searchModes\"><a ng-click=\"setActiveSearchMode(searchMode)\" href=\"#\"><span bind-html-unsafe=\"searchMode.label\"></span></a></li>\n" +
     "                </ul>\n" +
     "            </div>\n" +
     "\n" +
     "            <span class=\"input-group-btn\">\n" +
-    "                <button type=\"submit\" class=\"btn btn-default\" type=\"button\"><span class=\"glyphicon glyphicon-search\"></span></button>\n" +
+    "                <button type=\"submit\" class=\"btn btn-default margin-left-1\" type=\"button\"><span class=\"glyphicon glyphicon-search\"></span></button>\n" +
     "            </span>\n" +
     "        </div>\n" +
     "    </div>\n" +
