@@ -1384,7 +1384,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
@@ -1507,6 +1506,7 @@ angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$tem
     "            ng-show=\"items.length\"\n" +
     "            class=\"pagination\"\n" +
     "            ng-model=\"currentPage\"\n" +
+    "            page=\"currentPage\"\n" +
     "            items-per-page=\"limit\"\n" +
     "            total-items=\"totalItems\"\n" +
     "            max-size=\"maxSize\"\n" +
@@ -1516,8 +1516,7 @@ angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$tem
     "            previous-text=\"&lt;\"\n" +
     "            next-text=\"&gt;\"\n" +
     "            last-text=\"&gt;&gt;\"\n" +
-    "        >\n" +
-    "        </pagination>\n" +
+    "        ></pagination>\n" +
     "    </div>\n" +
     "\n" +
     "    <ul class=\"media-list\" style=\"width: 100%;\">\n" +
@@ -1529,6 +1528,7 @@ angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$tem
     "            ng-show=\"items.length\"\n" +
     "            class=\"pagination\"\n" +
     "            ng-model=\"currentPage\"\n" +
+    "            page=\"currentPage\"\n" +
     "            items-per-page=\"limit\"\n" +
     "            total-items=\"totalItems\"\n" +
     "            max-size=\"maxSize\"\n" +
@@ -1538,8 +1538,7 @@ angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$tem
     "            previous-text=\"&lt;\"\n" +
     "            next-text=\"&gt;\"\n" +
     "            last-text=\"&gt;&gt;\"\n" +
-    "        >\n" +
-    "        </pagination>\n" +
+    "        ></pagination>\n" +
     "    </div>\n" +
     "</div>\n" +
     "");
