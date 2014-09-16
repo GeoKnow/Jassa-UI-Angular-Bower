@@ -793,8 +793,12 @@ angular.module('ui.jassa.jassa-media-list', [])
         });
     };
 
-    $scope.$watch('currentPage', function() {
-        $scope.offset = ($scope.currentPage - 1) * $scope.limit;
+//    $scope.$watch('currentPage', function() {
+//        $scope.offset = ($scope.currentPage - 1) * $scope.limit;
+//    });
+
+    $scope.$watch('offset', function() {
+        $scope.currentPage = Math.floor($scope.offset / $scope.limit) + 1;
     });
 
     $scope.$watch('[filter, limit, offset, refresh]', $scope.doRefresh, true);
@@ -813,7 +817,7 @@ angular.module('ui.jassa.jassa-media-list', [])
             limit: '=',
             offset: '=',
             totalItems: '=',
-            currentPage: '=',
+            //currentPage: '=',
             items: '=',
             maxSize: '=',
             refresh: '=' // Extra attribute that is deep watched on changes for triggering refreshs
@@ -1384,7 +1388,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
