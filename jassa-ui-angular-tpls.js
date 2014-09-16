@@ -797,7 +797,8 @@ angular.module('ui.jassa.jassa-media-list', [])
         $scope.offset = ($scope.currentPage - 1) * $scope.limit;
     });
 
-    $scope.$watch('[offset, totalItems, filter, refresh]', $scope.doRefresh, true);
+    $scope.$watch('[filter, limit, offset, refresh]', $scope.doRefresh, true);
+    $scope.$watch('listService', $scope.doRefresh);
 }])
 
 .directive('jassaMediaList', [function() {
@@ -814,6 +815,7 @@ angular.module('ui.jassa.jassa-media-list', [])
             totalItems: '=',
             currentPage: '=',
             items: '=',
+            maxSize: '=',
             refresh: '=' // Extra attribute that is deep watched on changes for triggering refreshs
         },
         controller: 'JassaMediaListCtrl',
@@ -1382,7 +1384,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
@@ -1503,15 +1504,18 @@ angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$tem
     "    <div style=\"width: 100%; text-align: center\">\n" +
     "        <pagination\n" +
     "            ng-show=\"items.length\"\n" +
-    "            class=\"pagination\" max-size=\"7\"\n" +
+    "            class=\"pagination\"\n" +
+    "            ng-model=\"currentPage\"\n" +
+    "            items-per-page=\"limit\"\n" +
     "            total-items=\"totalItems\"\n" +
-    "            page=\"currentPage\"\n" +
+    "            max-size=\"maxSize\"\n" +
     "            boundary-links=\"true\"\n" +
     "            rotate=\"false\"\n" +
     "            first-text=\"&lt;&lt;\"\n" +
     "            previous-text=\"&lt;\"\n" +
     "            next-text=\"&gt;\"\n" +
-    "            last-text=\"&gt;&gt;\">\n" +
+    "            last-text=\"&gt;&gt;\"\n" +
+    "        >\n" +
     "        </pagination>\n" +
     "    </div>\n" +
     "\n" +
@@ -1522,15 +1526,18 @@ angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$tem
     "    <div style=\"width: 100%; text-align: center\">\n" +
     "        <pagination\n" +
     "            ng-show=\"items.length\"\n" +
-    "            class=\"pagination\" max-size=\"7\"\n" +
+    "            class=\"pagination\"\n" +
+    "            ng-model=\"currentPage\"\n" +
+    "            items-per-page=\"limit\"\n" +
     "            total-items=\"totalItems\"\n" +
-    "            page=\"currentPage\"\n" +
+    "            max-size=\"maxSize\"\n" +
     "            boundary-links=\"true\"\n" +
     "            rotate=\"false\"\n" +
     "            first-text=\"&lt;&lt;\"\n" +
     "            previous-text=\"&lt;\"\n" +
     "            next-text=\"&gt;\"\n" +
-    "            last-text=\"&gt;&gt;\">\n" +
+    "            last-text=\"&gt;&gt;\"\n" +
+    "        >\n" +
     "        </pagination>\n" +
     "    </div>\n" +
     "</div>\n" +
