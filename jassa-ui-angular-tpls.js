@@ -1478,14 +1478,14 @@ angular.module("template/list-search/list-search.html", []).run(["$templateCache
     "                placeholder=\"Find ...\">\n" +
     "\n" +
     "            <div class=\"input-group-btn\">\n" +
-    "                <button type=\"button\" class=\"btn btn-default dropdown-toggle no-border-radius margin-left-1\" data-toggle=\"dropdown\">{{activeSearchMode.label}} <span class=\"caret\"></span></button>\n" +
+    "                <button type=\"button\" class=\"btn btn-default dropdown-toggle no-border-radius\" style=\"margin-left: -1px; margin-right: -1px;\" data-toggle=\"dropdown\">{{activeSearchMode.label}} <span class=\"caret\"></span></button>\n" +
     "                <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n" +
     "                    <li ng-repeat=\"searchMode in searchModes\"><a ng-click=\"setActiveSearchMode(searchMode)\" href=\"#\"><span bind-html-unsafe=\"searchMode.label\"></span></a></li>\n" +
     "                </ul>\n" +
     "            </div>\n" +
     "\n" +
     "            <span class=\"input-group-btn\">\n" +
-    "                <button type=\"submit\" class=\"btn btn-default margin-left-1\" type=\"button\"><span class=\"glyphicon glyphicon-search\"></span></button>\n" +
+    "                <button type=\"submit\" class=\"btn btn-default\" type=\"button\"><span class=\"glyphicon glyphicon-search\"></span></button>\n" +
     "            </span>\n" +
     "        </div>\n" +
     "    </div>\n" +
