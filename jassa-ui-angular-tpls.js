@@ -778,7 +778,7 @@ angular.module('ui.jassa.facet-value-list', [])
 
 ;
 
-angular.module('ui.jassa.facet-typeahead', [])
+angular.module('ui.jassa.jassa-media-list', [])
 
 .controller('JassaMediaListCtrl', ['$scope', '$q', function($scope, $q) {
     $scope.doRefresh = function() {
