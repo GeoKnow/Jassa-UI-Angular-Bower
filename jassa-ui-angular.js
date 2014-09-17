@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-09-16
+ * Version: 0.0.4-SNAPSHOT - 2014-09-18
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -782,7 +782,7 @@ angular.module('ui.jassa.jassa-media-list', [])
 .controller('JassaMediaListCtrl', ['$scope', '$q', '$timeout', function($scope, $q, $timeout) {
     $scope.currentPage = 1;
 
-    // TODO Get rid of the $timeouts
+    // TODO Get rid of the $timeouts - not sure why $q.when alone breaks when we return results from cache
 
     $scope.doRefresh = function() {
         $q.when($scope.listService.fetchCount($scope.filter)).then(function(countInfo) {
@@ -829,7 +829,8 @@ angular.module('ui.jassa.jassa-media-list', [])
             //currentPage: '=',
             items: '=',
             maxSize: '=',
-            refresh: '=' // Extra attribute that is deep watched on changes for triggering refreshs
+            refresh: '=', // Extra attribute that is deep watched on changes for triggering refreshs
+            context: '=' // Extra data that can be passed in // TODO I would prefer access to the parent scope
         },
         controller: 'JassaMediaListCtrl',
         link: function(scope, element, attrs, ctrl, transcludeFn) {
