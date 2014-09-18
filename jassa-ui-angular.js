@@ -779,6 +779,10 @@ angular.module('ui.jassa.facet-value-list', [])
 
 angular.module('ui.jassa.jassa-list-browser', [])
 
+//.controller('JassaListBrowserCtrl', ['$scope', function($scope) {
+//
+//}])
+
 .directive('jassaListBrowser', function() {
     return {
         restrict: 'EA',
@@ -793,9 +797,11 @@ angular.module('ui.jassa.jassa-list-browser', [])
             maxSize: '=',
             langs: '=', // Extra attribute that is deep watched on changes for triggering refreshs
             availableLangs: '=',
+            doFilter: '@',
             context: '=' // Extra data that can be passed in // TODO I would prefer access to the parent scope
         },
-        templateUrl: 'template/jassa-list-browser/jassa-list-browser.html'
+        templateUrl: 'template/jassa-list-browser/jassa-list-browser.html',
+        //controller: 'JassaListBrowserCtrl'
     };
 })
 

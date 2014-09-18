@@ -780,6 +780,10 @@ angular.module('ui.jassa.facet-value-list', [])
 
 angular.module('ui.jassa.jassa-list-browser', [])
 
+//.controller('JassaListBrowserCtrl', ['$scope', function($scope) {
+//
+//}])
+
 .directive('jassaListBrowser', function() {
     return {
         restrict: 'EA',
@@ -794,9 +798,11 @@ angular.module('ui.jassa.jassa-list-browser', [])
             maxSize: '=',
             langs: '=', // Extra attribute that is deep watched on changes for triggering refreshs
             availableLangs: '=',
+            doFilter: '@',
             context: '=' // Extra data that can be passed in // TODO I would prefer access to the parent scope
         },
-        templateUrl: 'template/jassa-list-browser/jassa-list-browser.html'
+        templateUrl: 'template/jassa-list-browser/jassa-list-browser.html',
+        //controller: 'JassaListBrowserCtrl'
     };
 })
 
@@ -1423,7 +1429,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
