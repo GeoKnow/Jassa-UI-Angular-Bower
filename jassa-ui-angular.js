@@ -5,7 +5,7 @@
  * Version: 0.0.4-SNAPSHOT - 2014-09-18
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -772,6 +772,30 @@ angular.module('ui.jassa.facet-value-list', [])
 //            return function link(scope, elm, attrs, controller) {
 //            };
 //        }
+    };
+})
+
+;
+
+angular.module('ui.jassa.jassa-list-browser', [])
+
+.directive('jassaListBrowser', function() {
+    return {
+        restrict: 'EA',
+        replace: true,
+        scope: {
+            listService: '=',
+            filter: '=',
+            limit: '=',
+            offset: '=',
+            totalItems: '=',
+            items: '=',
+            maxSize: '=',
+            langs: '=', // Extra attribute that is deep watched on changes for triggering refreshs
+            availableLangs: '=',
+            context: '=' // Extra data that can be passed in // TODO I would prefer access to the parent scope
+        },
+        templateUrl: 'template/jassa-list-browser/jassa-list-browser.html'
     };
 })
 

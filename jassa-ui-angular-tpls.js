@@ -5,8 +5,8 @@
  * Version: 0.0.4-SNAPSHOT - 2014-09-18
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
-angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -778,6 +778,30 @@ angular.module('ui.jassa.facet-value-list', [])
 
 ;
 
+angular.module('ui.jassa.jassa-list-browser', [])
+
+.directive('jassaListBrowser', function() {
+    return {
+        restrict: 'EA',
+        replace: true,
+        scope: {
+            listService: '=',
+            filter: '=',
+            limit: '=',
+            offset: '=',
+            totalItems: '=',
+            items: '=',
+            maxSize: '=',
+            langs: '=', // Extra attribute that is deep watched on changes for triggering refreshs
+            availableLangs: '=',
+            context: '=' // Extra data that can be passed in // TODO I would prefer access to the parent scope
+        },
+        templateUrl: 'template/jassa-list-browser/jassa-list-browser.html'
+    };
+})
+
+;
+
 angular.module('ui.jassa.jassa-media-list', [])
 
 .controller('JassaMediaListCtrl', ['$scope', '$q', '$timeout', function($scope, $q, $timeout) {
@@ -1399,7 +1423,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
@@ -1509,6 +1532,45 @@ angular.module("template/facet-value-list/facet-value-list.html", []).run(["$tem
     "              </tr>\n" +
     "      	</table>\n" +
     "  		<pagination class=\"pagination-small\" total-items=\"pagination.totalItems\" page=\"pagination.currentPage\" max-size=\"pagination.maxSize\" boundary-links=\"true\" rotate=\"false\" num-pages=\"pagination.numPages\" previous-text=\"&lsaquo;\" next-text=\"&rsaquo;\" first-text=\"&laquo;\" last-text=\"&raquo;\"></pagination>\n" +
+    "</div>\n" +
+    "");
+}]);
+
+angular.module("template/jassa-list-browser/jassa-list-browser.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/jassa-list-browser/jassa-list-browser.html",
+    "<div class=\"container\">\n" +
+    "    <div class=\"row\">\n" +
+    "        <div class=\"col-md-12\">\n" +
+    "\n" +
+    "            <div class=\"alert alert-success\" role=\"alert\">\n" +
+    "\n" +
+    "                <list-search ng-model=\"searchString\" submit=\"doFilter(searchString)\" search-modes=\"searchModes\" active-search-mode=\"activeSearchMode\"></list-search>\n" +
+    "                <div>\n" +
+    "                    <ul class=\"list-inline\">\n" +
+    "                        <li><span>Language Settings: </span></li>\n" +
+    "                        <li><lang-select langs=\"langs\" available-langs=\"availableLangs\"></lang-select></li>\n" +
+    "                    </ul>\n" +
+    "                </div>\n" +
+    "\n" +
+    "                <div>\n" +
+    "                    <strong>Found <span class=\"badge\">{{totalItems}}</span> items</strong>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "\n" +
+    "    <div class=\"row\">\n" +
+    "\n" +
+    "        <div class=\"col-md-12\">\n" +
+    "\n" +
+    "            <jassa-media-list list-service=\"listService\" offset=\"offset\" limit=\"limit\" filter=\"filter\" total-items=\"totalItems\" items=\"items\" refresh=\"langs\" context=\"context\">\n" +
+    "                <ng-include src=\"context.itemTemplate\"></ng-include>\n" +
+    "            </jassa-media-list>\n" +
+    "\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "\n" +
     "</div>\n" +
     "");
 }]);
