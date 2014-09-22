@@ -1431,7 +1431,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
@@ -1573,7 +1572,7 @@ angular.module("template/jassa-list-browser/jassa-list-browser.html", []).run(["
     "\n" +
     "        <div class=\"col-md-12\">\n" +
     "\n" +
-    "            <jassa-media-list list-service=\"listService\" offset=\"offset\" limit=\"limit\" maxSize=\"maxSize\" filter=\"filter\" total-items=\"totalItems\" items=\"items\" refresh=\"langs\" context=\"context\">\n" +
+    "            <jassa-media-list list-service=\"listService\" offset=\"offset\" limit=\"limit\" max-size=\"maxSize\" filter=\"filter\" total-items=\"totalItems\" items=\"items\" refresh=\"langs\" context=\"context\">\n" +
     "                <ng-include src=\"context.itemTemplate\"></ng-include>\n" +
     "            </jassa-media-list>\n" +
     "\n" +
