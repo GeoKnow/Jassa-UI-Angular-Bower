@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-09-23
+ * Version: 0.0.4-SNAPSHOT - 2014-09-24
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -237,7 +237,11 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 .controller('FacetTreeCtrl', ['$rootScope', '$scope', '$q', function($rootScope, $scope, $q) {
         
     var self = this;
-      
+
+    $scope.loading = {
+		data: false,
+	};
+    
       
     var updateFacetTreeService = function() {
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig;
@@ -290,11 +294,14 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
             var facetTreeTagger = Jassa.facete.FaceteUtils.createFacetTreeTagger($scope.facetTreeConfig.getPathToFilterString());
     
             //console.log('scopefacets', $scope.facet);             
+
+            $scope.loading.data = true;
             var promise = $scope.facetTreeService.fetchFacetTree(startPath);
               
             Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $rootScope, function(data) {
                 facetTreeTagger.applyTags(data);
                 $scope.facet = data;
+                $scope.loading.data = false;
             });
     
         } else {
@@ -388,7 +395,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
     return {
         restrict: 'EA',
         replace: true,
-        templateUrl: 'template/facet-tree/facet-tree-item.html',
+        templateUrl: 'template/facet-tree/facet-tree-root.html',
         transclude: false,
         require: 'facetTree',
         scope: {
@@ -650,6 +657,11 @@ angular.module('ui.jassa.facet-value-list', [])
         currentPage: 1,
         maxSize: 5
     };
+
+    $scope.loading = {
+		data: false,
+        pageCount: false
+	};
     
     //$scope.path = null;
     
@@ -712,12 +724,17 @@ angular.module('ui.jassa.facet-value-list', [])
         
         var dataPromise = fetcher.fetchData(offset, pageSize);
 
+        $scope.loading.pageCount = true;
+        $scope.loading.data = true;
+
         jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $scope.$root, function(countInfo) {
             $scope.pagination.totalItems = countInfo.count;
+            $scope.loading.pageCount = false;
         });
         
         jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $scope.$root, function(items) {
             $scope.facetValues = items;
+            $scope.loading.data = false;
         });
 
     };

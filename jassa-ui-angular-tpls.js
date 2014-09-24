@@ -2,11 +2,11 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-09-23
+ * Version: 0.0.4-SNAPSHOT - 2014-09-24
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
-angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
+angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-tree/facet-tree-root.html","template/facet-value-list/facet-value-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -238,7 +238,11 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 .controller('FacetTreeCtrl', ['$rootScope', '$scope', '$q', function($rootScope, $scope, $q) {
         
     var self = this;
-      
+
+    $scope.loading = {
+		data: false,
+	};
+    
       
     var updateFacetTreeService = function() {
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig;
@@ -291,11 +295,14 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
             var facetTreeTagger = Jassa.facete.FaceteUtils.createFacetTreeTagger($scope.facetTreeConfig.getPathToFilterString());
     
             //console.log('scopefacets', $scope.facet);             
+
+            $scope.loading.data = true;
             var promise = $scope.facetTreeService.fetchFacetTree(startPath);
               
             Jassa.sponate.angular.bridgePromise(promise, $q.defer(), $rootScope, function(data) {
                 facetTreeTagger.applyTags(data);
                 $scope.facet = data;
+                $scope.loading.data = false;
             });
     
         } else {
@@ -389,7 +396,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
     return {
         restrict: 'EA',
         replace: true,
-        templateUrl: 'template/facet-tree/facet-tree-item.html',
+        templateUrl: 'template/facet-tree/facet-tree-root.html',
         transclude: false,
         require: 'facetTree',
         scope: {
@@ -651,6 +658,11 @@ angular.module('ui.jassa.facet-value-list', [])
         currentPage: 1,
         maxSize: 5
     };
+
+    $scope.loading = {
+		data: false,
+        pageCount: false
+	};
     
     //$scope.path = null;
     
@@ -713,12 +725,17 @@ angular.module('ui.jassa.facet-value-list', [])
         
         var dataPromise = fetcher.fetchData(offset, pageSize);
 
+        $scope.loading.pageCount = true;
+        $scope.loading.data = true;
+
         jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $scope.$root, function(countInfo) {
             $scope.pagination.totalItems = countInfo.count;
+            $scope.loading.pageCount = false;
         });
         
         jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $scope.$root, function(items) {
             $scope.facetValues = items;
+            $scope.loading.data = false;
         });
 
     };
@@ -1431,7 +1448,6 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
 
 angular.module("template/facet-tree/facet-dir-content.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-tree/facet-dir-content.html",
-    "\n" +
     "<!-- ng-show=\"dirset.pageCount > 1 || dirset.children.length > 5\" -->\n" +
     "\n" +
     "\n" +
@@ -1524,6 +1540,19 @@ angular.module("template/facet-tree/facet-tree-item.html", []).run(["$templateCa
     "");
 }]);
 
+angular.module("template/facet-tree/facet-tree-root.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/facet-tree/facet-tree-root.html",
+    "<div>\n" +
+    "	<span ng-show=\"loading.data\">\n" +
+    "		Loading... \n" +
+    "	    <span ng-show=\"loading.data\">(data)</span>\n" +
+    "	</span>\n" +
+    "\n" +
+    "    <ng-include src=\"'template/facet-tree/facet-tree-item.html'\"></ng-include>\n" +
+    "</div>\n" +
+    "");
+}]);
+
 angular.module("template/facet-value-list/facet-value-list.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-value-list/facet-value-list.html",
     "<div class=\"frame\">\n" +
@@ -1531,6 +1560,13 @@ angular.module("template/facet-value-list/facet-value-list.html", []).run(["$tem
     "	    <input type=\"text\" ng-model=\"filterText\" />\n" +
     "		<input class=\"btn-primary\" type=\"submit\" value=\"Filter\" />\n" +
     "	</form>\n" +
+    "\n" +
+    "	<span ng-show=\"loading.data || loading.pageCount\">\n" +
+    "		Loading... \n" +
+    "	    <span ng-show=\"loading.data\">(data)</span>\n" +
+    "	    <span ng-show=\"loading.pageCount\">(page count)</span>\n" +
+    "	</span>\n" +
+    "\n" +
     "	<table>\n" +
     "              <tr><th>Value</th><th>Constrained</th></tr>\n" +
     "<!-- <th>Count</th> -->\n" +
@@ -1573,7 +1609,7 @@ angular.module("template/jassa-list-browser/jassa-list-browser.html", []).run(["
     "\n" +
     "        <div class=\"col-md-12\">\n" +
     "\n" +
-    "            <jassa-media-list list-service=\"listService\" offset=\"offset\" limit=\"limit\" max-size=\"maxSize\" filter=\"filter\" total-items=\"totalItems\" items=\"items\" refresh=\"langs\" context=\"context\">\n" +
+    "            <jassa-media-list list-service=\"listService\" offset=\"offset\" limit=\"limit\" filter=\"filter\" total-items=\"totalItems\" items=\"items\" refresh=\"langs\" context=\"context\">\n" +
     "                <ng-include src=\"context.itemTemplate\"></ng-include>\n" +
     "            </jassa-media-list>\n" +
     "\n" +
