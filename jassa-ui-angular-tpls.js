@@ -239,22 +239,6 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
     var self = this;
 
-
-    /*
-    var getOrCreateState = function(path) {
-        path = path || null;
-        var pathToState = $scope.facetTreeConfig.getPathToState();
-        var result = pathToState.get(path);
-        if(!result) {
-            result = new jassa.facete.FacetNodeState();
-            pathToState.put(path, result);
-        }
-
-        return result;
-    };
-    */
-
-
     var updateFacetTreeService = function() {
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig;
         $scope.facetTreeService = isConfigured ? jassa.facete.FacetTreeServiceUtils.createFacetTreeService($scope.sparqlService, $scope.facetTreeConfig) : null;
@@ -265,17 +249,6 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
         self.refresh();
     };
 
-
-//    $scope.setFacetHover = function(facet, isHovered) {
-//        facet.isHovered = isHovered;
-//        if(facet.incoming) {
-//            facet.incoming.isHovered = isHovered;
-//        }
-//
-//        if(facet.outgoing) {
-//            facet.outgoing.isHovered = isHovered;
-//        }
-//    };
 
     $scope.ObjectUtils = jassa.util.ObjectUtils;
 
@@ -303,7 +276,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
         //getOrCreateState(path).getListFilter().setFilter(filterString);
 
         //$scope.facetTreeConfig.getPathToFilterString().put(path, filterString);
-        self.refresh();
+        //self.refresh();
     };
 
     self.refresh = function() {
@@ -320,6 +293,18 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
         }
     };
 
+    $scope.toggleControls = function(path) {
+        var pathToTags = $scope.facetTreeConfig.getPathToTags();
+        //tags.showControls = !tags.showControls;
+        var tags = pathToTags.get(path);
+        if(!tags) {
+            tags = {};
+            pathToTags.put(path, tags);
+        }
+
+        tags.showControls = !tags.showControls;
+    };
+
     $scope.toggleCollapsed = function(path) {
         var pathExpansions = $scope.facetTreeConfig.getFacetTreeState().getPathExpansions();
         jassa.util.CollectionUtils.toggleItem(pathExpansions, path);
@@ -330,7 +315,8 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
     $scope.selectIncoming = function(path) {
         if($scope.facetTreeConfig) {
-            $scope.facetTreeConfig.getFacetTreeState().getPathToDirection().put(path, 1);
+            var pathToDirection = $scope.facetTreeConfig.getFacetTreeState().getPathToDirection();
+            pathToDirection.put(path, -1);
 
             // No need to refresh here, as we are changing the config object
             //self.refresh();
@@ -339,7 +325,8 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
     $scope.selectOutgoing = function(path) {
         if($scope.facetTreeConfig) {
-            $scope.facetTreeConfig.getFacetTreeState().getPathToDirection().put(path, -1);
+            var pathToDirection = $scope.facetTreeConfig.getFacetTreeState().getPathToDirection();
+            pathToDirection.put(path, 1);
 
             // No need to refresh here, as we are changing the config object
             //self.refresh();
@@ -1425,10 +1412,10 @@ angular.module("template/facet-tree/facet-dir-ctrl.html", []).run(["$templateCac
     "<div style=\"width: 100%; background-color: #eeeeff;\">\n" +
     "    <div style=\"padding-right: 16px; padding-left: 16px\">\n" +
     "\n" +
-    "        <form class=\"form-inline\" role=\"form\" ng-submit=\"doFilter(dirset.path, dirset.filter.filterString)\">\n" +
+    "        <form class=\"form-inline\" role=\"form\" ng-submit=\"doFilter(dirset.pathHead, dirset.filterString)\">\n" +
     "\n" +
     "            <div class=\"form-group\">\n" +
-    "                <input type=\"text\" class=\"form-control input-sm\" placeholder=\"Filter\" ng-model=\"dirset.tags.state.getFilter().getConcept()\" />\n" +
+    "                <input type=\"text\" class=\"form-control input-sm\" placeholder=\"Filter\" ng-model=\"dirset.filterString\" />\n" +
     "            </div>\n" +
     "            <div class=\"form-group\">\n" +
     "                <button type=\"submit\" class=\"btn btn-default input-sm\">Filter</button>\n" +
@@ -1464,14 +1451,14 @@ angular.module("template/facet-tree/facet-tree-item.html", []).run(["$templateCa
     "\n" +
     "        <a title=\"{{facet.property.getUri()}}\" href=\"\" ng-click=\"toggleSelected(facet.path)\">{{facet.labelInfo.displayLabel || facet.property.getUri()}}</a>\n" +
     "\n" +
-    "        <a style=\"margin-left: 5px; margin-right: 5px;\" ng-class=\"!facet.isExpanded ? 'hide' : { 'show-on-hover-child': !facet.tags.controls.isContained }\" href=\"\" ng-click=\"toggleControls(facet.path)\"><span class=\"glyphicon glyphicon-cog\"></span></a>\n" +
+    "        <a style=\"margin-left: 5px; margin-right: 5px;\" ng-class=\"!facet.isExpanded ? 'hide' : { 'visible-on-hover-child': !facet.tags.showControls }\" href=\"\" ng-click=\"toggleControls(facet.path)\"><span class=\"glyphicon glyphicon-cog\"></span></a>\n" +
     "\n" +
     "        <template-list style=\"list-style:none; display: inline; padding-left: 0px;\" templates=\"plugins\" data=\"facet\" context=\"pluginContext\"></template-list>\n" +
     "\n" +
-    "        <span style=\"float: right\" class=\"badge\" ng-bind-html=\"(facet.item.getDistinctValueCount() == null || facet.item.getDistinctValueCount() < 0) ? '&#8230;' : ('' + facet.item.getDistinctValueCount())\"></span>\n" +
+    "        <span style=\"float: right\" class=\"badge\" ng-bind-html=\"(!facet.valueCountInfo || facet.valueCountInfo.hasMoreItems) ? '&#8230;' : ('' + facet.valueCountInfo.count)\"></span>\n" +
     "\n" +
-    "        <div ng-if=\"facet.isExpanded && facet.tags.controls.isContained && facet.incoming\" style=\"width:100%\" ng-repeat=\"dirset in [facet.incoming]\" ng-include=\"'template/facet-tree/facet-dir-ctrl.html'\"></div>\n" +
-    "        <div ng-if=\"facet.isExpanded && facet.tags.controls.isContained && facet.outgoing\" style=\"width:100%\" ng-repeat=\"dirset in [facet.outgoing]\" ng-include=\"'template/facet-tree/facet-dir-ctrl.html'\"></div>\n" +
+    "        <div ng-if=\"facet.isExpanded && facet.tags.showControls && facet.incoming\" style=\"width:100%\" ng-repeat=\"dirset in [facet.incoming]\" ng-include=\"'template/facet-tree/facet-dir-ctrl.html'\"></div>\n" +
+    "        <div ng-if=\"facet.isExpanded && facet.tags.showControls && facet.outgoing\" style=\"width:100%\" ng-repeat=\"dirset in [facet.outgoing]\" ng-include=\"'template/facet-tree/facet-dir-ctrl.html'\"></div>\n" +
     "    </div>\n" +
     "\n" +
     "    <div ng-if=\"facet.isExpanded\" style=\"width:100%\">\n" +
