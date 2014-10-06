@@ -694,8 +694,8 @@ angular.module('ui.jassa.facet-value-list', [])
     };
 
     var update = function() {
-        updateFacetTreeService();
-        self.refresh();
+        updateFacetValueService();
+        refresh();
     };
 
     $scope.ObjectUtils = jassa.util.ObjectUtils;
