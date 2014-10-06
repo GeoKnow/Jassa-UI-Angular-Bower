@@ -659,7 +659,7 @@ angular.module('ui.jassa.facet-value-list', [])
 
         //facetValueService = isConfigured ? new jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
         if(isConfigured) {
-            var facetConfig = $scope.facetTreeService.getFacetConfig();
+            var facetConfig = $scope.facetTreeConfig.getFacetConfig();
             facetValueService = new facete.FacetValueService($scope.sparqlService, facetConfig, 5000000);
         }
     };
