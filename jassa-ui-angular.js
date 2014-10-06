@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-10-05
+ * Version: 0.0.4-SNAPSHOT - 2014-10-06
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -229,6 +229,35 @@ angular.module('ui.jassa.facet-tree', [])
 
 angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
+/*
+.controller('FacetDirCtrl', ['$scope', function($scope) {
+    dirset.offset = dirset.listFilter.getOffset() || 0;
+    dirset.limit = dirset.listFilter.getLimit() || 0;
+    dirset.pageCount = dirset.limit ? Math.floor(dirset.childCountInfo.count / dirset.limit) : 1;
+    dirset.currentPage = dirset.limit ? Math.floor(dirset.offset / dirset.limit) + 1 : 1;
+}])
+*/
+
+.controller('FacetNodeCtrl', ['$scope', function($scope) {
+    $scope.$watchCollection('[facet.incoming, facet.outgoing]', function() {
+        var facet = $scope.facet;
+        if(facet) {
+            $scope.dirset = facet.outgoing ? facet.outgoing : facet.incoming;
+        }
+    });
+
+    $scope.$watchCollection('[dirset, dirset.listFilter.getOffset(), dirset.listFilter.getLimit(), dirset.childCountInfo.count]', function() {
+        var dirset = $scope.dirset;
+        if(dirset) {
+            dirset.offset = dirset.listFilter.getOffset() || 0;
+            dirset.limit = dirset.listFilter.getLimit() || 0;
+            dirset.pageCount = dirset.limit ? Math.floor(dirset.childCountInfo.count / dirset.limit) : 1;
+            dirset.currentPage = dirset.limit ? Math.floor(dirset.offset / dirset.limit) + 1 : 1;
+        }
+    });
+
+}])
+
 /**
  * Controller for the SPARQL based FacetTree
  * Supports nested incoming and outgoing properties
@@ -250,6 +279,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
 
     $scope.ObjectUtils = jassa.util.ObjectUtils;
+    $scope.Math = Math;
 
     var watchList = '[ObjectUtils.hashCode(facetTreeConfig)]';
     $scope.$watch(watchList, function() {
@@ -265,11 +295,12 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
         var pathHeadToFilter = $scope.facetTreeConfig.getFacetTreeState().getPathHeadToFilter();
         var filter = pathHeadToFilter.get(pathHead);
         if(!filter) {
-            filter = new jassa.facete.ListFilter();
+            filter = new jassa.facete.ListFilter(null, 10, 0);
             pathHeadToFilter.put(pathHead, filter);
         }
 
         filter.setConcept(filterString);
+        filter.setOffset(0);
 
 
         //getOrCreateState(path).getListFilter().setFilter(filterString);
@@ -330,6 +361,19 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
             // No need to refresh here, as we are changing the config object
             //self.refresh();
         }
+    };
+
+
+    $scope.selectPage = function(pathHead, page) {
+        var pathHeadToFilter = $scope.facetTreeConfig.getFacetTreeState().getPathHeadToFilter();
+        var filter = pathHeadToFilter.get(pathHead);
+        if(!filter) {
+            filter = new jassa.facete.ListFilter(null, 10, 0);
+            pathHeadToFilter.put(pathHead, filter);
+        }
+        var newOffset = (page - 1) * filter.getLimit();
+        filter.setOffset(newOffset);
+        //console.log('newOffset: ' + newOffset);
     };
 
 }])
