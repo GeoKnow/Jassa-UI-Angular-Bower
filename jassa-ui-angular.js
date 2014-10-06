@@ -650,21 +650,49 @@ angular.module('ui.jassa.facet-value-list', [])
         currentPage: 1,
         maxSize: 5
     };
-    
-    //$scope.path = null;
-    
 
+    $scope.path = null;
     var facetValueService = null;
-    
-    var self = this;
 
-
-    var updateFacetTreeService = function() {
+    var updateFacetValueService = function() {
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig && $scope.path;
 
-        facetValueService = isConfigured ? new jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
+        //facetValueService = isConfigured ? new jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig) : null;
+        facetValueService = new facete.FacetValueService(sparqlService, facetConfig, 5000000);
     };
-    
+
+    var refresh = function() {
+        var path = $scope.path;
+
+        if(!facetValueService || !path) {
+            $scope.totalItems = 0;
+            $scope.facetValues = [];
+            return;
+        }
+
+        facetValueService.prepareTableService($scope.path, false)
+            .then(function(ls) {
+
+                var pageSize = 10;
+                var offset = ($scope.pagination.currentPage - 1) * pageSize;
+
+                var countPromise = ls.fetchCount(filter, pageSize, offset);
+                var dataPromise = ls.fetchItems(filter, pageSize, offset);
+
+                $q.when(countPromise).then(function(countInfo) {
+                    $scope.pagination.totalItems = countInfo.count;
+                });
+
+                $q.when(dataPromise).then(function(entries) {
+                    var items = entries.map(function(entry) {
+                        return entry.val;
+                    });
+
+                    $scope.facetValues = items;
+                });
+            });
+    };
+
     var update = function() {
         updateFacetTreeService();
         self.refresh();
@@ -676,50 +704,20 @@ angular.module('ui.jassa.facet-value-list', [])
     $scope.$watch(watchList, function() {
         update();
     }, true);
-    
+
     $scope.$watch('sparqlService', function() {
         update();
     });
-    
+
 
 
     $scope.toggleConstraint = function(item) {
         var constraintManager = facetValueService.getFacetTreeConfig().getFacetConfig().getConstraintManager();
-        
+
         var constraint = new jassa.facete.ConstraintEquals(item.path, item.node);
 
         // TODO Integrate a toggle constraint method into the filterManager
         constraintManager.toggleConstraint(constraint);
-    };
-    
-    
-    
-    self.refresh = function() {
-        var path = $scope.path;
-        
-        if(!facetValueService || !path) {
-            $scope.totalItems = 0;
-            $scope.facetValues = [];
-            return;
-        }
-        
-        var fetcher = facetValueService.createFacetValueFetcher($scope.path, $scope.filterText);
-
-        var countPromise = fetcher.fetchCount();
-        
-        var pageSize = 10;
-        var offset = ($scope.pagination.currentPage - 1) * pageSize;
-        
-        var dataPromise = fetcher.fetchData(offset, pageSize);
-
-        jassa.sponate.angular.bridgePromise(countPromise, $q.defer(), $scope.$root, function(countInfo) {
-            $scope.pagination.totalItems = countInfo.count;
-        });
-        
-        jassa.sponate.angular.bridgePromise(dataPromise, $q.defer(), $scope.$root, function(items) {
-            $scope.facetValues = items;
-        });
-
     };
 
     $scope.filterTable = function(filterText) {
@@ -727,18 +725,18 @@ angular.module('ui.jassa.facet-value-list', [])
         update();
     };
 
-    
+
     /*
     $scope.$on('facete:facetSelected', function(ev, path) {
 
         $scope.currentPage = 1;
         $scope.path = path;
-        
+
         updateItems();
     });
-    
+
     $scope.$on('facete:constraintsChanged', function() {
-        updateItems(); 
+        updateItems();
     });
     */
 //  $scope.firstText = '<<';
@@ -752,7 +750,7 @@ angular.module('ui.jassa.facet-value-list', [])
  * The actual dependencies are:
  * - sparqlServiceFactory
  * - facetTreeConfig
- * - labelMap (maybe this should be part of the facetTreeConfig) 
+ * - labelMap (maybe this should be part of the facetTreeConfig)
  */
 .directive('facetValueList', function() {
     return {
