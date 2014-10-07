@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-10-06
+ * Version: 0.0.4-SNAPSHOT - 2014-10-07
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -81,36 +81,43 @@ angular.module('ui.jassa.constraint-list', [])
 
     var self = this;
 
-    //var constraintManager;
-
-    var updateConfig = function() {
-        var isConfigured = $scope.facetTreeConfig;
-        //debugger;
-        $scope.constraintManager = isConfigured ? $scope.facetTreeConfig.getFacetConfig().getConstraintManager() : null;
+    var reset = function() {
+        if($scope.sparqlService && $scope.facetTreeConfig) {
+            var labelConfig = $scope.facetTreeConfig.getBestLiteralConfig();
+            var mappedConcept = jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(labelConfig);
+            var ls = jassa.sponate.LookupServiceUtils.createLookupServiceMappedConcept($scope.sparqlService, mappedConcept);
+            ls = new jassa.service.LookupServiceTransform(ls, function(val) {
+                return val.displayLabel || val.id;
+            });
+            $scope.constraintLabelsLookupService = new jassa.facete.LookupServiceConstraintLabels(ls);
+        }
     };
-    
-    var update = function() {
-        updateConfig();
-        self.refresh();
+
+    var refresh = function() {
+
+        if($scope.constraintLabelsLookupService) {
+
+            var constraints = $scope.constraintManager ? $scope.constraintManager.getConstraints() : [];
+            var promise = $scope.constraintLabelsLookupService.lookup(constraints);
+
+            $q.when(promise).then(function(map) {
+
+                var items =_(constraints).map(function(constraint) {
+                    var label = map.get(constraint);
+
+                    var r = {
+                        constraint: constraint,
+                        label: label
+                    };
+
+                    return r;
+                });
+
+                $scope.constraints = items;
+            });
+        }
     };
 
-
-    $scope.ObjectUtils = Jassa.util.ObjectUtils;
-
-    var watchList = '[ObjectUtils.hashCode(facetTreeConfig)]';
-    $scope.$watch(watchList, function() {
-		update();
-	}, true);
-    
-    $scope.$watch('sparqlService', function() {
-        update();
-    });
-    
-    $scope.$watch('labelService', function() {
-        update();
-    });
-    
-    
     var renderConstraint = function(constraint) {
         var type = constraint.getName();
 
@@ -126,39 +133,31 @@ angular.module('ui.jassa.constraint-list', [])
         default:
             result = constraint;
         }
-        
+
         return result;
     };
-    
-    self.refresh = function() {
 
-        var constraintManager = $scope.constraintManager;
-        var constraints = constraintManager ? constraintManager.getConstraints() : [];
+    $scope.$watch('constraintLabelsLookupService', function() {
+        refresh();
+    });
 
-        var promise = jassa.service.LookupServiceUtils.lookup($scope.labelService, constraints);
+    $scope.$watch('facetTreeConfig.getFacetConfig().getConstraintManager()', function(cm) {
+        $scope.constraintManager = cm;
+        refresh();
+    }, true);
 
-        jassa.sponate.angular.bridgePromise(promise, $q.defer(), $scope, function(map) {
+    $scope.$watch('sparqlService', function() {
+        reset();
+    });
 
-            var items =_(constraints).map(function(constraint) {
-                var label = map.get(constraint);
+    $scope.$watch('facetTreeConfig.getBestLiteralConfig()', function() {
+        reset();
+    }, true);
 
-                var r = {
-                    constraint: constraint,
-                    label: label
-                };
-                
-                return r;
-            });
-
-            $scope.constraints = items;
-        });
-    };
-    
     $scope.removeConstraint = function(item) {
         $scope.constraintManager.removeConstraint(item.constraint);
-        //$scope.$emit('facete:constraintsChanged');
     };
-    
+
 }])
 
 
@@ -166,7 +165,7 @@ angular.module('ui.jassa.constraint-list', [])
  * The actual dependencies are:
  * - sparqlServiceFactory
  * - facetTreeConfig
- * - labelMap (maybe this should be part of the facetTreeConfig) 
+ * - labelMap (maybe this should be part of the facetTreeConfig)
  */
 .directive('constraintList', function() {
     return {
@@ -283,6 +282,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
     var watchList = '[ObjectUtils.hashCode(facetTreeConfig)]';
     $scope.$watch(watchList, function() {
+        console.log('UpdateTree', $scope.facetTreeConfig);
         update();
     }, true);
 
@@ -673,21 +673,32 @@ angular.module('ui.jassa.facet-value-list', [])
             return;
         }
 
-        facetValueService.prepareTableService($scope.path, false)
+        facetValueService.prepareTableService($scope.path, true)
             .then(function(ls) {
 
+                var filter = null;
                 var pageSize = 10;
                 var offset = ($scope.pagination.currentPage - 1) * pageSize;
 
-                var countPromise = ls.fetchCount(filter, pageSize, offset);
+                var countPromise = ls.fetchCount(filter);
                 var dataPromise = ls.fetchItems(filter, pageSize, offset);
 
                 $q.when(countPromise).then(function(countInfo) {
+                    console.log('countInfo: ', countInfo);
+
                     $scope.pagination.totalItems = countInfo.count;
                 });
 
                 $q.when(dataPromise).then(function(entries) {
                     var items = entries.map(function(entry) {
+                        var labelInfo = entry.val.labelInfo = {};
+                        labelInfo.displayLabel = '' + entry.key;
+                        console.log('entry: ', entry);
+
+                        entry.val.node = entry.key;
+                        entry.val.path = $scope.path;
+
+
                         return entry.val;
                     });
 
@@ -715,9 +726,11 @@ angular.module('ui.jassa.facet-value-list', [])
 
 
     $scope.toggleConstraint = function(item) {
-        var constraintManager = facetValueService.getFacetTreeConfig().getFacetConfig().getConstraintManager();
+        var constraintManager = $scope.facetTreeConfig.getFacetConfig().getConstraintManager();
 
-        var constraint = new jassa.facete.ConstraintEquals(item.path, item.node);
+        var path = $scope.path;
+        var node = item.node;
+        var constraint = new jassa.facete.ConstraintEquals(path, node);
 
         // TODO Integrate a toggle constraint method into the filterManager
         constraintManager.toggleConstraint(constraint);
