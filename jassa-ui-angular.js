@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.0.4-SNAPSHOT - 2014-10-07
+ * Version: 0.0.4-SNAPSHOT - 2014-10-08
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -276,13 +276,16 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
         self.refresh();
     };
 
+    $scope.itemsPerPage = [10, 25, 50, 100];
 
     $scope.ObjectUtils = jassa.util.ObjectUtils;
     $scope.Math = Math;
 
-    var watchList = '[ObjectUtils.hashCode(facetTreeConfig)]';
+    $scope.startPath = null;
+
+    var watchList = '[ObjectUtils.hashCode(facetTreeConfig), startPath]';
     $scope.$watch(watchList, function() {
-        console.log('UpdateTree', $scope.facetTreeConfig);
+        //console.log('UpdateTree', $scope.facetTreeConfig);
         update();
     }, true);
 
@@ -312,7 +315,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
     self.refresh = function() {
 
         if($scope.facetTreeService) {
-            var promise = $scope.facetTreeService.fetchFacetTree();
+            var promise = $scope.facetTreeService.fetchFacetTree($scope.startPath);
             $q.when(promise).then(function(data) {
                 $scope.facet = data;
                 //console.log('TREE: ' + JSON.stringify($scope.facet, null, 4));
@@ -341,6 +344,20 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 
         // No need to refresh here, as we are changing the config object
         //self.refresh();
+    };
+
+    $scope.isEqual = function(a, b) {
+        var r = a == null ? b == null : a.equals(b);
+        return r;
+    };
+
+    $scope.setStartPath = function(path) {
+        //var p = path.getParent();
+        //var isRoot = p == null || $scope.isEqual($scope.startPath, p);
+        //$scope.startPath = isRoot ? null : p;
+
+        var isRoot = path == null || $scope.isEqual($scope.startPath, path);
+        $scope.startPath = isRoot ? null : path;
     };
 
     $scope.selectIncoming = function(path) {
@@ -684,7 +701,7 @@ angular.module('ui.jassa.facet-value-list', [])
                 var dataPromise = ls.fetchItems(filter, pageSize, offset);
 
                 $q.when(countPromise).then(function(countInfo) {
-                    console.log('countInfo: ', countInfo);
+                    //console.log('countInfo: ', countInfo);
 
                     $scope.pagination.totalItems = countInfo.count;
                 });
@@ -693,7 +710,7 @@ angular.module('ui.jassa.facet-value-list', [])
                     var items = entries.map(function(entry) {
                         var labelInfo = entry.val.labelInfo = {};
                         labelInfo.displayLabel = '' + entry.key;
-                        console.log('entry: ', entry);
+                        //console.log('entry: ', entry);
 
                         entry.val.node = entry.key;
                         entry.val.path = $scope.path;
