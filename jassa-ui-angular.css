@@ -7,11 +7,6 @@
 }
 */
 
-.label-gray {
-    color: gray;
-    background-color: transparent;
-}
-
 .pagination-inline > li > a, .pagination > li > span {
     background-color: transparent;
     border: 0px;
