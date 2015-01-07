@@ -2,11 +2,11 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2014-11-13
+ * Version: 0.9.0-SNAPSHOT - 2015-01-07
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
-angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-value-list/facet-value-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
+angular.module("ui.jassa.tpls", ["template/constraint-list/constraint-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-tree/facet-tree-root.html","template/facet-value-list/facet-value-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -263,7 +263,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
  * Supports nested incoming and outgoing properties
  *
  */
-.controller('FacetTreeCtrl', ['$rootScope', '$scope', '$q', '$timeout', function($rootScope, $scope, $q, $timeout) {
+.controller('FacetListCtrl', ['$rootScope', '$scope', '$q', '$timeout', function($rootScope, $scope, $q, $timeout) {
 
     var self = this;
 
@@ -425,6 +425,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 })
 
 ;
+
 
 angular.module('ui.jassa.facet-typeahead', [])
 
@@ -893,6 +894,7 @@ angular.module('ui.jassa.facet-value-list', [])
 })
 
 ;
+
 
 angular.module('ui.jassa.jassa-list-browser', [])
 
@@ -1657,9 +1659,23 @@ angular.module("template/facet-tree/facet-tree-item.html", []).run(["$templateCa
     "");
 }]);
 
+angular.module("template/facet-tree/facet-tree-root.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/facet-tree/facet-tree-root.html",
+    "<div>\n" +
+    "	<span ng-show=\"loading.data\">\n" +
+    "		Loading... \n" +
+    "	    <span ng-show=\"loading.data\">(data)</span>\n" +
+    "	</span>\n" +
+    "\n" +
+    "    <ng-include src=\"'template/facet-tree/facet-tree-item.html'\"></ng-include>\n" +
+    "</div>\n" +
+    "");
+}]);
+
 angular.module("template/facet-value-list/facet-value-list.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-value-list/facet-value-list.html",
     "<div class=\"frame\">\n" +
+    "<<<<<<< HEAD\n" +
     "    <form ng-submit=\"filterTable(filterText)\">\n" +
     "        <input type=\"text\" ng-model=\"filterText\" />\n" +
     "        <input class=\"btn-primary\" type=\"submit\" value=\"Filter\" />\n" +
@@ -1680,6 +1696,29 @@ angular.module("template/facet-value-list/facet-value-list.html", []).run(["$tem
     "<!--               </tr> -->\n" +
     "<!--           </table> -->\n" +
     "          <pagination class=\"pagination-small\" total-items=\"pagination.totalItems\" page=\"pagination.currentPage\" max-size=\"pagination.maxSize\" boundary-links=\"true\" rotate=\"false\" num-pages=\"pagination.numPages\" previous-text=\"&lsaquo;\" next-text=\"&rsaquo;\" first-text=\"&laquo;\" last-text=\"&raquo;\"></pagination>\n" +
+    "=======\n" +
+    "	<form ng-submit=\"filterTable(filterText)\">\n" +
+    "	    <input type=\"text\" ng-model=\"filterText\" />\n" +
+    "		<input class=\"btn-primary\" type=\"submit\" value=\"Filter\" />\n" +
+    "	</form>\n" +
+    "\n" +
+    "	<span ng-show=\"loading.data || loading.pageCount\">\n" +
+    "		Loading... \n" +
+    "	    <span ng-show=\"loading.data\">(data)</span>\n" +
+    "	    <span ng-show=\"loading.pageCount\">(page count)</span>\n" +
+    "	</span>\n" +
+    "\n" +
+    "	<table>\n" +
+    "              <tr><th>Value</th><th>Constrained</th></tr>\n" +
+    "<!-- <th>Count</th> -->\n" +
+    "	    <tr ng-repeat=\"item in facetValues\">\n" +
+    "                  <td><span title=\"{{item.node.toString()}}\">{{item.displayLabel}}</span></td>\n" +
+    "<!--                    <td>todo</td> -->\n" +
+    "                  <td><input type=\"checkbox\" ng-model=\"item.tags.isConstrainedEqual\" ng-change=\"toggleConstraint(item)\" /></td>\n" +
+    "              </tr>\n" +
+    "      	</table>\n" +
+    "  		<pagination class=\"pagination-small\" total-items=\"pagination.totalItems\" page=\"pagination.currentPage\" max-size=\"pagination.maxSize\" boundary-links=\"true\" rotate=\"false\" num-pages=\"pagination.numPages\" previous-text=\"&lsaquo;\" next-text=\"&rsaquo;\" first-text=\"&laquo;\" last-text=\"&raquo;\"></pagination>\n" +
+    ">>>>>>> origin\n" +
     "</div>\n" +
     "");
 }]);

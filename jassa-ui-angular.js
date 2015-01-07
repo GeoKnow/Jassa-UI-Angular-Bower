@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2014-11-13
+ * Version: 0.9.0-SNAPSHOT - 2015-01-07
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -262,7 +262,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
  * Supports nested incoming and outgoing properties
  *
  */
-.controller('FacetTreeCtrl', ['$rootScope', '$scope', '$q', '$timeout', function($rootScope, $scope, $q, $timeout) {
+.controller('FacetListCtrl', ['$rootScope', '$scope', '$q', '$timeout', function($rootScope, $scope, $q, $timeout) {
 
     var self = this;
 
@@ -424,6 +424,7 @@ angular.module('ui.jassa.facet-tree', ['ui.jassa.template-list'])
 })
 
 ;
+
 
 angular.module('ui.jassa.facet-typeahead', [])
 
@@ -892,6 +893,7 @@ angular.module('ui.jassa.facet-value-list', [])
 })
 
 ;
+
 
 angular.module('ui.jassa.jassa-list-browser', [])
 
