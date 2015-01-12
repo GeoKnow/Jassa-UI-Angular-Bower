@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-01-07
+ * Version: 0.9.0-SNAPSHOT - 2015-01-12
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.constraint-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -779,6 +779,10 @@ angular.module('ui.jassa.facet-value-list', [])
 
                 $q.when(dataPromise).then(function(entries) {
                     var items = entries.map(function(entry) {
+                        return entry.val;
+                    });
+                    /*
+                    var items = entries.map(function(entry) {
                         var labelInfo = entry.val.labelInfo = {};
                         labelInfo.displayLabel = '' + entry.key;
                         //console.log('entry: ', entry);
@@ -791,6 +795,7 @@ angular.module('ui.jassa.facet-value-list', [])
 
                         return entry.val;
                     });
+                    */
                     var cm = $scope.facetTreeConfig.getFacetConfig().getConstraintManager();
                     var cs = cm.getConstraintsByPath(path);
                     var values = {};
