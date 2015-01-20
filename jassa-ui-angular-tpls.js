@@ -2,10 +2,10 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-01-16
+ * Version: 0.9.0-SNAPSHOT - 2015-01-20
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.constraint-list","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module("ui.jassa.tpls", ["template/breadcrumb/breadcrumb.html","template/constraint-list/constraint-list.html","template/facet-list/facet-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-tree/facet-tree-root.html","template/facet-value-list/facet-value-list.html","template/jassa-list/jassa-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.auto-focus', [])
 
@@ -289,6 +289,34 @@ angular.module('ui.jassa.breadcrumb', [])
 
 ;
 
+angular.module('Facete2')
+
+/**
+ * Source http://stackoverflow.com/questions/17417607/angular-ng-bind-html-unsafe-and-directive-within-it
+ */
+.directive('compile', ['$compile', function ($compile) {
+    return function(scope, element, attrs) {
+        scope.$watch(
+          function(scope) {
+             // watch the 'compile' expression for changes
+            return scope.$eval(attrs.compile);
+          },
+          function(value) {
+            // when the 'compile' expression changes
+            // assign it into the current DOM
+            element.html(value);
+
+            // compile the new DOM and link it to the current
+            // scope.
+            // NOTE: we only compile .childNodes so that
+            // we don't get into infinite loop compiling ourselves
+            $compile(element.contents())(scope);
+          }
+      );
+  };
+}])
+
+;
 angular.module('ui.jassa.constraint-list', [])
 
 .controller('ConstraintListCtrl', ['$scope', '$q', '$rootScope', function($scope, $q, $rootScope) {
@@ -2403,7 +2431,7 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "                    <button style=\"text-align: left;\" class=\"btn btn-default btn-label facet-list-item-btn\" type=\"button\" ng-click=\"$parent.$parent.breadcrumb.property = item.property.getUri()\">\n" +
     "                        <span class=\"glyphicon glyphicon glyphicon-record\"></span>\n" +
     "                        {{item.labelInfo.displayLabel || $parent.$parent.NodeUtils.toPrettyString(item.property)}}\n" +
-    "                        <span class=\"counter\">{{item.valueCountInfo.hasMoreItems ? '...' : '' + item.valueCountInfo.count}}</span>\n" +
+    "                        <span class=\"counter\"> {{item.valueCountInfo.hasMoreItems ? '...' : '' + item.valueCountInfo.count}}</span>\n" +
     "                    </button>\n" +
     "                    <button class=\"btn btn-default facet-list-item-btn pull-right\" type=\"button\" ng-click=\"$parent.$parent.descendFacet(item.property)\">\n" +
     "                        <span class=\"glyphicon glyphicon-chevron-down\"></span>\n" +
@@ -2415,7 +2443,7 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "                    <button ng-class=\"item.isConstrainedEqual ? 'btn-primary' : 'btn-default'\" style=\"margin-bottom: -1px; text-align: left;\" class=\"btn btn-label facet-list-item-btn\" type=\"button\" ng-click=\"$parent.$parent.toggleConstraint(item.node)\">\n" +
     "                        <span class=\"glyphicon glyphicon glyphicon-record facet-value\"></span>\n" +
     "                        {{$parent.$parent.NodeUtils.toPrettyString(item.node)}}\n" +
-    "                        <span class=\"counter\">{{item.countInfo.hasMoreItems ? '...' : '' + item.countInfo.count}}</span>\n" +
+    "                        <span class=\"counter\"> {{item.countInfo.hasMoreItems ? '...' : '' + item.countInfo.count}}</span>\n" +
     "                    </button>\n" +
     "                </div>\n" +
     "\n" +
