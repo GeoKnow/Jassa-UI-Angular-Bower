@@ -2,11 +2,11 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-01-21
+ * Version: 0.9.0-SNAPSHOT - 2015-02-10
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
-angular.module("ui.jassa.tpls", ["template/breadcrumb/breadcrumb.html","template/constraint-list/constraint-list.html","template/facet-list/facet-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-tree/facet-tree-root.html","template/facet-value-list/facet-value-list.html","template/jassa-list/jassa-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.include-replace","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa.tpls", ["template/breadcrumb/breadcrumb.html","template/constraint-list/constraint-list.html","template/dataset-browser/dataset-browser.html","template/dataset-browser/dataset-list-item.html","template/dataset-browser/distribution-list.html","template/facet-list/facet-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-tree/facet-tree-root.html","template/facet-value-list/facet-value-list.html","template/jassa-list/jassa-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.auto-focus', [])
 
 // Source: http://stackoverflow.com/questions/14833326/how-to-set-focus-on-input-field
@@ -101,7 +101,7 @@ angular.module('ui.jassa.breadcrumb', [])
         var sparqlService = $scope.sparqlService;
 
         var propertyName = $scope.model.property;
-        var property = propertyName == null ? null : jassa.rdf.NodeFactory.createUri(propertyName);
+        var property = (propertyName == null || propertyName === true) ? null : jassa.rdf.NodeFactory.createUri(propertyName);
 
         var pathHead = $scope.model.pathHead;
         var path = pathHead ? pathHead.getPath() : null;
@@ -296,21 +296,30 @@ angular.module('ui.jassa.compile', [])
  * http://stackoverflow.com/questions/17417607/angular-ng-bind-html-unsafe-and-directive-within-it
  */
 .directive('compile', ['$compile', function($compile) {
-    return function(scope, element, attrs) {
-        scope.$watch(function(scope) {
-            // watch the 'compile' expression for changes
-            return scope.$eval(attrs.compile);
-        }, function(value) {
-            // when the 'compile' expression changes
-            // assign it into the current DOM
-            element.html(value);
+    return {
+        scope: true,
+        terminal: true,
+        replace: true,
+        compile: function(elem, attrs) {
+            return {
+                post: function(scope, elem, attrs, controller) {
+                    scope.$watch(function(scope) {
+                        // watch the 'compile' expression for changes
+                        return scope.$eval(attrs.compile);
+                    }, function(value) {
+                        // when the 'compile' expression changes
+                        // assign it into the current DOM
+                        elem.html(value);
 
-            // compile the new DOM and link it to the current
-            // scope.
-            // NOTE: we only compile .childNodes so that
-            // we don't get into infinite loop compiling ourselves
-            $compile(element.contents())(scope);
-        });
+                        // compile the new DOM and link it to the current
+                        // scope.
+                        // NOTE: we only compile .childNodes so that
+                        // we don't get into infinite loop compiling ourselves
+                        $compile(elem.contents())(scope);
+                    });
+                }
+            };
+        }
     };
 }])
 
@@ -427,7 +436,190 @@ angular.module('ui.jassa.constraint-list', [])
 
 ;
 
-angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
+//angular.module('DatasetBrowser', ['ui.jassa', 'ui.bootstrap', 'ui.sortable', 'ui.keypress', 'ngSanitize'])
+angular.module('ui.jassa.dataset-browser', ['ui.jassa.include-replace'])
+
+.controller('DatasetBrowserCtrl', ['$scope', '$q', function($scope, $q) {
+
+    var createListService = function(sparqlService, langs) {
+
+        /*
+         * Set up the Sponate mapping for the data we are interested in
+         */
+        var store = new jassa.sponate.StoreFacade(sparqlService, {
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'dbpedia-owl': 'http://dbpedia.org/ontology/',
+            'foaf': 'http://xmlns.com/foaf/0.1/',
+            'dcat': 'http://www.w3.org/ns/dcat#',
+            'theme': 'http://example.org/resource/theme/',
+            'o': 'http://example.org/ontology/'
+        });
+
+        var labelConfig = new jassa.sparql.BestLabelConfig(langs);
+        var labelTemplateFn = function() { return jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(labelConfig); };
+        var commentTemplateFn = function() { return jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(new jassa.sparql.BestLabelConfig(langs, [jassa.vocab.rdfs.comment])); };
+
+        var template = [{
+            id: '?s',
+            label: { $ref: { target: labelTemplateFn, attr: 'displayLabel' }},
+            comment: { $ref: { target: commentTemplateFn, attr: 'displayLabel' }},
+            depiction: '?d',
+            resources: [{
+                label: '"Distributions"',
+                type: '"dataset"',
+                items: [{ $ref: { target: 'distributions', on: '?x'} }],
+                template: 'template/dataset-browser/distribution-list.html'
+            }, {
+                label: '"Join Summaries"',
+                type: 'join-summary',
+                items: [[{ $ref: { target: 'datasets', on: '?j'} }], function(items) { // <- here be recursion
+                    var r = _(items).chain().map(function(item) {
+                                return item.resources[0].items;
+                            }).flatten(true).value();
+                    return r;
+                }],
+                template: 'template/dataset-browser/distribution-list.html'
+            }]
+        }];
+
+        store.addMap({
+            name: 'primaryDatasets',
+            template: template,
+            from: '?s a dcat:Dataset ; dcat:theme theme:primary . Optional { ?s foaf:depiction ?d } . Optional { ?x o:distributionOf ?s } Optional { ?j o:joinSummaryOf ?s }'
+        });
+
+        store.addMap({
+            name: 'datasets',
+            template: template,
+            from: '?s a dcat:Dataset . Optional { ?s foaf:depiction ?d } . Optional { ?x o:distributionOf ?s } Optional { ?j o:joinSummaryOf ?s }'
+        });
+
+        store.addMap({
+            name: 'distributions',
+            template: [{
+                id: '?s',
+                accessUrl: '?a',
+                graphs: ['?g']
+            }],
+            from: '?s a dcat:Distribution ; dcat:accessURL ?a . Optional { ?s o:graph ?g } '
+        });
+
+
+        var result = store.primaryDatasets.getListService();
+
+        result = new jassa.service.ListServiceTransformConceptMode(result, function() {
+            var searchConfig = new jassa.sparql.BestLabelConfig(langs, [jassa.vocab.rdfs.comment, jassa.vocab.rdfs.label]);
+            var labelRelation = jassa.sparql.LabelUtils.createRelationPrefLabels(searchConfig);
+            return labelRelation;
+        });
+
+        result.fetchItems().then(function(entries) {
+            console.log('Got: ', entries);
+        });
+
+        return result;
+    };
+
+
+    $scope.$watch(function() {
+        return $scope.sparqlService;
+    }, function(sparqlService) {
+        $scope.listService = createListService(sparqlService, $scope.langs);
+    });
+
+
+    $scope.langs = ['de', 'en', ''];
+
+    /*
+     * Create a list service for our mapping and decorate it with
+     * keyword search support
+     */
+    $scope.searchModes = [{
+        label: 'regex',
+        mode: 'regex'
+    }, {
+        label: 'fulltext',
+        mode: 'fulltext'
+    }];
+
+    $scope.activeSearchMode = $scope.searchModes[0];
+
+    /*
+     * Angular setup
+     */
+    $scope.availableLangs = ['de', 'en', 'jp', 'ko'];
+
+
+    $scope.offset = 0;
+    $scope.limit = 10;
+    $scope.totalItems = 0;
+    $scope.items = [];
+    $scope.maxSize = 7;
+
+    $scope.doFilter = function(searchString) {
+        $scope.filter = {
+            searchString: searchString,
+            mode: $scope.activeSearchMode.mode
+        };
+        $scope.offset = 0;
+    };
+
+    /*
+    var buildAccessUrl = function(accessUrl, graphUrls) {
+        var defaultQuery = 'Select * { ?s ?p ?o } Limit 10'
+        return accessUrl + '?qtxt=' + encodeURIComponent(defaultQuery) + (
+            graphUrls && graphUrls.length > 0
+                ? '&' + graphUrls.map(function(item) { return 'default-graph-uri=' + encodeURIComponent(item); }).join('&')
+                : ''
+        );
+    }
+    */
+
+    $scope.context = {
+        onSelect: function() {
+            //console.log('onSelect called', arguments);
+            $scope.onSelect.apply(this, arguments);
+        }
+    };
+
+//    $scope.context = {
+//        // TODO Get rid of the limitation of having to pass in the itemTemplate via a 'context' object
+//        itemTemplate: 'template/dataset-browser/dataset-list-item.html'
+//    };
+
+    //$scope.itemTemplate = 'dataset-item.html';
+    $scope.itemTemplate = 'template/dataset-browser/dataset-list-item.html';
+}])
+
+.directive('datasetBrowser', function() {
+    return {
+        restrict: 'EA',
+        replace: true,
+        //templateUrl: 'template/dataset-browser/dataset-list.html',
+        templateUrl: 'template/dataset-browser/dataset-browser.html',
+        scope: {
+            sparqlService: '=',
+            //model: '=ngModel',
+            maxSize: '=?',
+            onSelect: '&?'
+        },
+        controller: 'DatasetBrowserCtrl',
+        compile: function(elm, attrs) {
+            return {
+                pre: function(scope, elm, attrs, controller) {
+                }
+            };
+//            return function link(scope, elm, attrs, controller) {
+//            };
+        }
+    };
+})
+
+
+
+;
+
+angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-style', 'ui.jassa.paging-model', 'ui.bootstrap']) // ui.bootstrap for paginator
 
 
 /**
@@ -436,6 +628,24 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
  *
  */
 .controller('FacetListCtrl', ['$rootScope', '$scope', '$q', '$timeout', function($rootScope, $scope, $q, $timeout) {
+
+
+    var listServiceWatcher = new ListServiceWatcher($scope, $q);
+
+    $scope.ls = listServiceWatcher.watch('listService');
+
+    $scope.$watch(function() {
+        return $scope.listFilter;
+    }, function(listFilter) {
+        if(listFilter != null) {
+            $scope.ls.ctrl.filter = listFilter;
+        }
+    });
+
+
+    $scope.pagingStyle = $scope.pagingStyle || {};
+
+
 
     $scope.showConstraints = false;
 
@@ -446,14 +656,18 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
 
     $scope.NodeUtils = jassa.rdf.NodeUtils;
 
-    $scope.breadcrumb = {
+    $scope.breadcrumb = $scope.breadcrumb || {};
+
+    var defs = {
         pathHead: new jassa.facete.PathHead(new jassa.facete.Path()),
         property: null
     };
 
+    _.defaults($scope.breadcrumb, defs);
+
     $scope.location = null;
 
-    $scope.listFilter = $scope.listFilter || { limit: 10, offset: 0, concept: null };
+    //$scope.listFilter = $scope.listFilter || { limit: 10, offset: 0, concept: null };
 
     //$scope.listFilter = $scope.listFilter || { limit: 10, offset: 0, concept: null };// new jassa.service.ListFilter();
 
@@ -464,9 +678,9 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
     $scope.facetValuePath = null;
 
 
-    $scope.$watch('filterString', function(newValue) {
-        $scope.listFilter.concept = newValue;
-    });
+//    $scope.$watch('filterString', function(newValue) {
+//        $scope.listFilter.concept = newValue;
+//    });
 
 
     $scope.$watch('location', function() {
@@ -497,10 +711,10 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
 //        }
 //    }, true);
 
-    $scope.$watch('listFilter.concept', function(newValue) {
-        $scope.filterModel = newValue;
-        $scope.filterString = newValue;
-    });
+//    $scope.$watch('listFilter.concept', function(newValue) {
+//        $scope.filterModel = newValue;
+//        $scope.filterString = newValue;
+//    });
 
     $scope.descendFacet = function(property) {
         var pathHead = $scope.breadcrumb.pathHead;
@@ -521,59 +735,64 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
 //    };
 
     var updateFacetValueService = function() {
-        var searchString = $scope.listFilter.concept;
 
         //console.log('Updating facet values');
-        var facetValueService = new jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig.getFacetConfig(), 5000000);
-
         var path = $scope.facetValuePath;
 
-        $q.when(facetValueService.prepareTableService(path, true)).then(function(listService) {
+        var isConfigured = $scope.sparqlService && $scope.facetTreeConfig;
 
-            var fnTransformSearch = function(searchString) {
-                var r;
-                if(searchString) {
+        if(isConfigured) {
+            var facetValueService = new jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig.getFacetConfig(), 5000000);
 
-                    var bestLiteralConfig = new jassa.sparql.BestLabelConfig();
-                    var relation = jassa.sparql.LabelUtils.createRelationPrefLabels(bestLiteralConfig);
-                    // TODO Make it configurable to whether scan URIs too (the true argument)
-                    r = jassa.sparql.KeywordSearchUtils.createConceptRegex(relation, searchString, true);
-                    //var result = sparql.KeywordSearchUtils.createConceptBifContains(relation, searchString);
-                } else {
-                    r = null;
-                }
+            $q.when(facetValueService.prepareTableService(path, true)).then(function(listService) {
 
-                return r;
-            };
+                var searchString = $scope.listFilter.concept;
 
-            listService = new jassa.service.ListServiceTransformConcept(listService, fnTransformSearch);
+                var fnTransformSearch = function(searchString) {
+                    var r;
+                    if(searchString) {
 
-
-
-            listService = new jassa.service.ListServiceTransformItems(listService, function(entries) {
-
-                var cm = $scope.facetTreeConfig.getFacetConfig().getConstraintManager();
-                var cs = cm.getConstraintsByPath(path);
-                var values = {};
-                cs.forEach(function(c) {
-                    if(c.getName() === 'equals') {
-                        values[c.getValue()] = true;
+                        var bestLiteralConfig = new jassa.sparql.BestLabelConfig();
+                        var relation = jassa.sparql.LabelUtils.createRelationPrefLabels(bestLiteralConfig);
+                        // TODO Make it configurable to whether scan URIs too (the true argument)
+                        r = jassa.sparql.KeywordSearchUtils.createConceptRegex(relation, searchString, true);
+                        //var result = sparql.KeywordSearchUtils.createConceptBifContains(relation, searchString);
+                    } else {
+                        r = null;
                     }
+
+                    return r;
+                };
+
+                listService = new jassa.service.ListServiceTransformConcept(listService, fnTransformSearch);
+
+
+
+                listService = new jassa.service.ListServiceTransformItems(listService, function(entries) {
+
+                    var cm = $scope.facetTreeConfig.getFacetConfig().getConstraintManager();
+                    var cs = cm.getConstraintsByPath(path);
+                    var values = {};
+                    cs.forEach(function(c) {
+                        if(c.getName() === 'equals') {
+                            values[c.getValue()] = true;
+                        }
+                    });
+
+                    entries.forEach(function(entry) {
+                        var item = entry.val;
+
+                        var isConstrained = values['' + item.node];
+                        item.isConstrainedEqual = isConstrained;
+                    });
+                    //$scope.facetValues = items;
+                    return entries;
                 });
 
-                entries.forEach(function(entry) {
-                    var item = entry.val;
 
-                    var isConstrained = values['' + item.node];
-                    item.isConstrainedEqual = isConstrained;
-                });
-                //$scope.facetValues = items;
-                return entries;
+                $scope.listService = listService;
             });
-
-
-            $scope.listService = listService;
-        });
+        }
 
         /*
         facetValueService.prepareTableService(path, false).then(function(ls) {
@@ -616,7 +835,7 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
 //    };
 
     var updateFacetService = function() {
-        console.log('Updating facets');
+        //console.log('Updating facets');
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig;
         var facetTreeService = isConfigured ? jassa.facete.FacetTreeServiceUtils.createFacetTreeService($scope.sparqlService, $scope.facetTreeConfig) : null;
 
@@ -654,7 +873,11 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
     $scope.$watch(function() {
         return $scope.breadcrumb.property;
     }, function(property) {
-        $scope.facetValuePath = property == null ? null : appendProperty($scope.breadcrumb.pathHead, property);
+        if(property === true) {
+            $scope.facetValuePath = $scope.breadcrumb.pathHead.getPath();
+        } else {
+            $scope.facetValuePath = property == null ? null : appendProperty($scope.breadcrumb.pathHead, property);
+        }
     });
 
     $scope.$watch('[breadcrumb.pathHead.hashCode(), facetValuePath.hashCode()]', function() {
@@ -688,10 +911,11 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb'])
             facetTreeConfig: '=',
             //facetConfig: '=',
             listFilter: '=?',
+            breadcrumb: '=?uiModel', // The visible facet / facetValue
             pathHead: '=?',
-            //plugins: '=',
-            //pluginContext: '=', //plugin context
-            paginationOptions: '=?',
+            plugins: '=',
+            pluginContext: '=?', //plugin context
+            pagingStyle: '=?',
             loading: '=?',
             onSelect: '&select'
         },
@@ -1418,6 +1642,20 @@ angular.module('ui.jassa.facet-value-list', [])
 ;
 
 
+angular.module('ui.jassa.include-replace', [])
+
+.directive('includeReplace', function () {
+    return {
+        require: 'ngInclude',
+        restrict: 'A', /* optional */
+        link: function (scope, el, attrs) {
+            el.replaceWith(el.children());
+        }
+    };
+})
+
+;
+
 angular.module('ui.jassa.jassa-list', [])
 
 .controller('JassaListCtrl', ['$scope', '$q', '$timeout', function($scope, $q, $timeout) {
@@ -1588,9 +1826,10 @@ angular.module('ui.jassa.jassa-list', [])
 
 angular.module('ui.jassa.jassa-list-browser', [])
 
-//.controller('JassaListBrowserCtrl', ['$scope', function($scope) {
-//
-//}])
+.controller('JassaListBrowserCtrl', ['$scope', function($scope) {
+    $scope.context = $scope.context || {};
+
+}])
 
 .directive('jassaListBrowser', function() {
     return {
@@ -1609,19 +1848,28 @@ angular.module('ui.jassa.jassa-list-browser', [])
             doFilter: '=',
             searchModes: '=',
             activeSearchMode: '=',
-            context: '=' // Extra data that can be passed in // TODO I would prefer access to the parent scope
+            itemTemplate: '=',
+            context: '=?' // Extra data that can be passed in // TODO I would prefer access to the parent scope
         },
         templateUrl: 'template/jassa-list-browser/jassa-list-browser.html',
-        //controller: 'JassaListBrowserCtrl'
+        controller: 'JassaListBrowserCtrl'
     };
 })
 
 ;
 
-angular.module('ui.jassa.jassa-media-list', [])
+angular.module('ui.jassa.jassa-media-list', ['ui.jassa.include-replace'])
 
 .controller('JassaMediaListCtrl', ['$scope', '$q', '$timeout', function($scope, $q, $timeout) {
     $scope.currentPage = 1;
+
+    $scope.limit = $scope.limit || 10;
+    $scope.offset = $scope.offset || 0;
+    $scope.items = $scope.items || [];
+    $scope.maxSize = $scope.maxSize || 6;
+
+
+
 
     // TODO Get rid of the $timeouts - not sure why $q.when alone breaks when we return results from cache
 
@@ -1659,28 +1907,29 @@ angular.module('ui.jassa.jassa-media-list', [])
     return {
         restrict: 'EA',
         templateUrl: 'template/jassa-media-list/jassa-media-list.html',
-        transclude: true,
+        //transclude: true,
         replace: true,
         scope: {
             listService: '=',
-            filter: '=',
-            limit: '=',
-            offset: '=',
-            totalItems: '=',
+            filter: '=?',
+            limit: '=?',
+            offset: '=?',
+            totalItems: '=?',
             //currentPage: '=',
-            items: '=',
-            maxSize: '=',
-            refresh: '=', // Extra attribute that is deep watched on changes for triggering refreshs
-            context: '=' // Extra data that can be passed in // TODO I would prefer access to the parent scope
+            itemTemplate: '=',
+            items: '=?',
+            maxSize: '=?',
+            refresh: '=?', // Extra attribute that is deep watched on changes for triggering refreshs
+            context: '=?' // Extra data that can be passed in // TODO I would prefer access to the parent scope
         },
         controller: 'JassaMediaListCtrl',
         link: function(scope, element, attrs, ctrl, transcludeFn) {
-            transcludeFn(scope, function(clone, scope) {
-                var e = element.find('ng-transclude');
-                var p = e.parent();
-                e.remove();
-                p.append(clone);
-            });
+//            transcludeFn(scope, function(clone, scope) {
+//                var e = element.find('ng-transclude');
+//                var p = e.parent();
+//                e.remove();
+//                p.append(clone);
+//            });
         }
     };
 }])
@@ -1791,6 +2040,428 @@ angular.module('ui.jassa.list-search', [])
 
 ;
 
+
+angular.module('ui.jassa.paging-model', [])
+
+/**
+ * A convenience directive which expands itself to several other html attributes
+ *
+ * {{ls.state.paging.totalItems}}
+ * {{ls.state.filter.limit}}
+ * {{ls.ctrl.paging.currentPage}}
+ *
+ *
+ * &lt;pagination paging-style="list.pagingStyle" &gt;
+ */
+.directive('pagingModel', ['$compile', function($compile) {
+
+    return {
+        priority: 1050,
+        restrict: 'A',
+        terminal: true,
+        scope: false,
+        compile: function(ele, attrs) {
+            return {
+                pre: function(scope, elem, attrs, ctrls) {
+                    // If the attribute is not present, add it
+                    var setDefaultAttr = function(key, val) {
+                        var expr = elem.attr(key);
+                        if(expr == null) {
+                            elem.attr(key, val);
+                        }
+                    };
+
+
+                    var base = attrs.pagingModel;
+                    if(base == null) {
+                        throw new Error('Object needed as argument for paging-model');
+                    }
+
+                    elem.removeAttr('paging-model');
+
+                    setDefaultAttr('total-items', base + '.state.paging.totalItems');
+                    setDefaultAttr('items-per-page', base + '.state.filter.limit');
+                    setDefaultAttr('ng-model', base + '.ctrl.paging.currentPage');
+
+                    // Fallback for legacy versions of ui bootstrap
+                    setDefaultAttr('page', base + '.ctrl.paging.currentPage');
+
+                    $compile(elem)(scope);
+                }
+            };
+        }
+    };
+}])
+
+;
+
+//var jassa = jassa || {};
+//jassa.angular = jassa.angular || {};
+//jassa.angular.
+var ListServiceWatcher = Jassa.ext.Class.create({
+    initialize: function($scope, $q) {
+        this.$scope = $scope;
+        this.$q = $q;
+    },
+
+
+    // Returns an object that is actively watched by angular
+    watch: function(rawListServiceExpr, defaults, result) {
+
+        var $scope = this.$scope;
+        var $q = this.$q;
+
+
+        var tryCatch = function(fn, def) {
+            var r;
+            try {
+                r = fn();
+            } catch(e) {
+                r = def || null;
+            }
+
+            return r;
+        };
+
+        // Set up the result object and apply defaults
+        result = result || {};
+
+//        var defaultsDeep = function(target, source) {
+//            _.forEach(source, function(v, k) {
+//            });
+//        }
+
+        // TODO We should use a recursive defaults method
+
+        var defs = ListServiceWatcher.getDefaults();
+        _.defaults(result, defs);
+
+        _.defaults(result.state, defs.state);
+        //_.defaults(result.state.entries, defs.state.entries);
+        _.defaults(result.state.listService, defs.state.listService);
+        _.defaults(result.state.filter, defs.state.filter);
+        _.defaults(result.state.paging, defs.state.paging);
+
+        _.defaults(result.loading, defs.loading);
+
+        _.defaults(result.ctrl, defs.ctrl);
+        _.defaults(result.ctrl.listService, defs.ctrl.listService);
+        _.defaults(result.ctrl.filter, defs.ctrl.filter);
+        _.defaults(result.ctrl.paging, defs.ctrl.paging);
+
+
+        _.defaults(result.paginationOptions, defs.paginationOptions);
+
+
+        // Util method
+        var calcNumPages = function() {
+            var limit = tryCatch(function() { return result.state.filter.limit; });
+            var totalItems = tryCatch(function() { return result.state.paging.totalItems; }, 0);
+
+            var r = (limit == null ? 1 : Math.ceil(totalItems / limit));
+
+            r = Math.max(r, 1);
+            return r;
+        };
+
+
+        //result.ctrl.listService = rawListServiceExpr;
+
+        result.doRefresh = function() {
+            var p1 = result.doRefreshCount();
+            var p2 = result.doRefreshData();
+
+            var r = jassa.util.PromiseUtils.all([p1, p2]);
+            return r;
+        };
+
+        result.doRefreshData = function() {
+            result.loading.data = true;
+
+            var filter = result.ctrl.filter;
+            var listService = result.ctrl.listService;
+
+            var r;
+            if(listService != null) {
+                r = Promise.resolve(listService).then(function(listService) {
+                    $q.when(listService.fetchItems(filter.concept, filter.limit, filter.offset)).then(function(entries) {
+
+                        result.state.entries = entries;
+
+                        result.state.items = entries.map(function(entry) {
+                            return entry.val;
+                        });
+
+                        result.loading.data = false;
+
+                        result.state.filter.limit = result.ctrl.filter.limit;
+                        result.state.filter.offset = result.ctrl.filter.offset;
+                        //result.state.listService = result.ctrl.listService;
+                    });
+                }, function() {
+                    result.loading.data = false;
+                });
+            } else {
+                r = Promise.resolve({});
+            }
+
+            return r;
+        };
+
+        result.doRefreshCount = function() {
+
+            var filter = result.ctrl.filter;
+            var listService = result.ctrl.listService;
+
+            var r;
+            if(listService != null) {
+                result.loading.pageCount = true;
+
+                r = Promise.resolve(listService).then(function(listService) {
+                    $q.when(listService.fetchCount(filter.concept)).then(function(countInfo) {
+                          //$scope.totalItems = countInfo.count;
+                        result.state.paging.totalItems = countInfo.count;
+
+                        result.state.paging.numPages = calcNumPages();
+
+
+                        result.loading.pageCount = false;
+                    }, function() {
+                        result.loading.pageCount = false;
+                    });
+                });
+            } else {
+                r = Promise.resolve({});
+            }
+
+            return r;
+        };
+
+
+        result.unwatch = function() {
+            result.watchers.forEach(function(watcher) {
+               watcher();
+            });
+
+            jassa.util.ArrayUtils.clear(result.watchers);
+        };
+
+        result.cancelAll = function() {
+            var ls = result.state.listService;
+            if(ls) {
+                ls.cancelAll();
+            }
+        };
+
+
+        // Keep track of all watchers, so we can unregister them all if desired
+        result.watchers = result.watchers || [];
+        var addWatch = function() {
+            var r = $scope.$watch.apply($scope, arguments);
+            result.watchers.push(r);
+            return r;
+        };
+
+        addWatch(rawListServiceExpr, function(lse) {
+            result.ctrl.listService = lse;
+        });
+
+        addWatch(function() {
+            return result.ctrl.listService;
+        }, function(listService) {
+            if(result.cancelAll) {
+                result.cancelAll();
+            }
+
+            //result.state.listService = jassa.util.PromiseUtils.lastRequestify(rawListService);
+            jassa.util.PromiseUtils.replaceService(result.state, 'listService', listService);
+
+            result.doRefresh();
+        });
+
+        addWatch(function() {
+            return result.ctrl.filter;
+        }, function() {
+            result.doRefresh();
+        }, true);
+
+        addWatch(function() {
+            return result.ctrl.filter.offset;
+        }, function(offset) {
+            var limit = result.ctrl.filter.limit;
+            result.state.paging.currentPage = Math.max(Math.floor(offset / limit) + 1, 1);
+
+            result.doRefreshData();
+        });
+
+        addWatch(function() {
+            return result.ctrl.paging.currentPage;
+        }, function(currentPage) {
+            var limit = result.ctrl.filter.limit;
+            result.ctrl.filter.offset = (currentPage - 1) * limit;
+
+            result.doRefreshData();
+        });
+
+//        addWatch(function() {
+//            return $scope.rawListService;
+//        }, function(rawListService) {
+//           jassa.util.PromiseUtils.replaceService($scope, 'listService', rawListService);
+//        });
+
+//        addWatch('[filter, refresh]', $scope.doRefresh, true);
+//        addWatch('listService', $scope.doRefresh);
+
+        return result;
+    }
+});
+
+
+ListServiceWatcher.getDefaults = function() {
+    var result = {
+        state: {
+            items: [],
+            entries: [],
+            filter: { // The filter that applies to the current list of items
+                concept: null,
+                limit: 10,
+                offset: 0
+            },
+            listService: null,
+            paging: {
+                currentPage: 1,
+                numPages: 1,
+                totalItems: 0
+            }
+        },
+        loading: {
+            data: false,
+            pageCount: false
+        },
+        ctrl: { // Control attributes; changing these will modify the state
+            listService: null,
+            filter: { // The filter to execute
+                concept: null,
+                limit: 10,
+                offset: 0
+            },
+            paging: {
+                currentPage: 1
+                //numPages: 1,
+                //totalItems: 0
+            }
+        },
+        watchers: []
+    };
+
+    return result;
+};
+
+angular.module('ui.jassa.paging-style', [])
+
+/**
+ * A convenience directive which expands itself to several other html attributes
+ *
+ * total-items
+ * items-per-page
+ * max-size
+ * num-pages
+ * rotate
+ * direction-links
+ * previous-text
+ * next-text
+ * boundary-links
+ * first-text
+ * last-text
+ *
+ * &lt;pagination paging-style="list.pagingStyle" &gt;
+ */
+.directive('pagingStyle', ['$compile', '$parse', function($compile, $parse) {
+
+    return {
+        priority: 1050,
+        restrict: 'A',
+        terminal: true,
+        scope: false,
+        compile: function(elem, attrs) {
+            return {
+                pre: function(scope, elem, attrs, ctrls) {
+                    var createDefaults = function() {
+                        return {
+                            maxSize: 6,
+                            rotate: true,
+                            boundaryLinks: true,
+                            directionLinks: true,
+                            firstText: '<<',
+                            previousText: '<',
+                            nextText: '>',
+                            lastText: '>>'
+                            /*
+                            firstText: '&lt;&lt;',
+                            previousText: '&lt;',
+                            nextText: '&gt;',
+                            lastText: '&gt;&gt;'
+                            */
+                        };
+                    };
+
+                    // If the attribute is not present, add it
+                    var setDefaultAttr = function(key, val, interpolate) {
+                        var expr = elem.attr(key);
+                        if(expr == null) {
+
+                            var v = interpolate ? '{{' + val + '}}' : val;
+                            elem.attr(key, v);
+                        }
+                    };
+
+
+                    var base = attrs.pagingStyle;
+                    if(base == null) {
+                        base = 'pagingStyle';
+                        scope.pagingStyle = {};
+                    }
+
+                    elem.removeAttr('paging-style');
+
+                    setDefaultAttr('max-size', base + '.maxSize', true);
+                    setDefaultAttr('rotate', base + '.rotate', true);
+                    setDefaultAttr('boundary-links', base + '.boundaryLinks', true);
+                    setDefaultAttr('first-text', base + '.firstText', true);
+                    setDefaultAttr('previous-text', base + '.previousText', true);
+                    setDefaultAttr('next-text', base + '.nextText', true);
+                    setDefaultAttr('last-text', base + '.lastText', true);
+                    setDefaultAttr('direction-links', base + '.directionLinks', true);
+
+                    var defs = createDefaults();
+
+                    var exprStr = attrs.pagingStyle;
+                    var modelGetter = $parse(exprStr);
+
+                    var initModel = function(obj) {
+                        obj = obj || modelGetter(scope);
+                        if(obj != null) {
+                            _.defaults(obj, defs);
+                        }
+                    };
+
+                    scope.$watch(function() {
+                        var r = modelGetter(scope);
+                        return r;
+                    }, function(obj) {
+                        initModel(obj);
+                    }, true);
+
+                    initModel();
+
+                    $compile(elem)(scope);
+                }
+            };
+        }
+    };
+}])
+
+;
 
 angular.module('ui.jassa.pointer-events-scroll-fix', [])
 
@@ -2334,6 +3005,13 @@ angular.module('ui.jassa.template-list', [])
 angular.module("template/breadcrumb/breadcrumb.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/breadcrumb/breadcrumb.html",
     "<ol class=\"breadcrumb facet-breadcrumb\" scroll-glue-right>\n" +
+    "    <!-- If the path is empty, show the instance list button  -->\n" +
+    "    <li ng-if=\"model.pathHead.getPath().isEmpty() && (model.property===true || model.property==null)\">\n" +
+    "        <button class=\"btn btn-default\" ng-disabled=\"model.pathHead.getPath().isEmpty() && model.property===true\" ng-click=\"model.property=true\">\n" +
+    "            <span class=\"glyphicon glyphicon glyphicon-list\"></span>\n" +
+    "        </button>\n" +
+    "    </li>\n" +
+    "\n" +
     "    <li>\n" +
     "        <button class=\"btn btn-default\" ng-disabled=\"path.isEmpty()\" ng-click=\"setPath(0)\">\n" +
     "            <span class=\"glyphicon glyphicon-home\"></span>\n" +
@@ -2351,7 +3029,7 @@ angular.module("template/breadcrumb/breadcrumb.html", []).run(["$templateCache",
     "        </button>\n" +
     "    </li>\n" +
     "\n" +
-    "    <li ng-show=\"state.value == null\">\n" +
+    "    <li ng-show=\"state.value == null && model.property !== true\">\n" +
     "        <button class=\"btn btn-default\" ng-click=\"invert()\">\n" +
     "            {{model.pathHead.isInverse() ? '&lt;' : '&gt;'}}\n" +
     "        </button>\n" +
@@ -2377,35 +3055,179 @@ angular.module("template/constraint-list/constraint-list.html", []).run(["$templ
     "");
 }]);
 
+angular.module("template/dataset-browser/dataset-browser.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/dataset-browser/dataset-browser.html",
+    "<div style=\"width: 100%\">\n" +
+    "    <jassa-list-browser\n" +
+    "        style=\"width: 100%\"\n" +
+    "        list-service=\"listService\"\n" +
+    "        offset=\"offset\"\n" +
+    "        limit=\"limit\"\n" +
+    "        filter=\"filter\"\n" +
+    "        do-filter=\"doFilter\"\n" +
+    "        total-items=\"totalItems\"\n" +
+    "        items=\"items\"\n" +
+    "        langs=\"langs\"\n" +
+    "        availableLangs=\"availableLangs\"\n" +
+    "        search-modes=\"searchModes\"\n" +
+    "        active-search-mode=\"activeSearchMode\"\n" +
+    "        context=\"context\"\n" +
+    "        item-template=\"itemTemplate\"\n" +
+    "    ></jassa-list-browser>\n" +
+    "</div>\n" +
+    "");
+}]);
+
+angular.module("template/dataset-browser/dataset-list-item.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/dataset-browser/dataset-list-item.html",
+    "<!-- <ul class=\"media-list\"> -->\n" +
+    "<!--     <li class=\"media\" ng-repeat=\"item in items\"> -->\n" +
+    "<!--         <ng-include src=\"'template/dataset-browser/dataset-item.html'\" include-replace></ng-include> -->\n" +
+    "<!--     </li> -->\n" +
+    "<!--     <li ng-show=\"!items.length\" class=\"alert alert-danger\" style=\"text-align: center\" role=\"alert\">No results</li> -->\n" +
+    "<!-- </ul> -->\n" +
+    "\n" +
+    "\n" +
+    "\n" +
+    "<!--     <li class=\"media\" ng-repeat=\"item in items\"> -->\n" +
+    "<!--         <ng-include src=\"'template/dataset-browser/dataset-item.html'\" include-replace></ng-include> -->\n" +
+    "<!--     </li> -->\n" +
+    "<!--     <li ng-show=\"!items.length\" class=\"alert alert-danger\" style=\"text-align: center\" role=\"alert\">No results</li> -->\n" +
+    "\n" +
+    "\n" +
+    "\n" +
+    "\n" +
+    "<div class=\"media-left\">\n" +
+    "    <a href=\"\" ng-click=\"context.onSelect({context: context, dataset: item})\">\n" +
+    "        <img class=\"media-object\" style=\"max-width: 64px; max-height: 64px;\" ng-src=\"{{item.depiction}}\">\n" +
+    "    </a>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div class=\"media-body\">\n" +
+    "    <a href=\"\" ng-click=\"context.onSelect({context: context, dataset: item})\"><h5 class=\"media-heading\">{{item.label || 'Sorry, there is no title available in your preferred languages'}}</h5></a>\n" +
+    "\n" +
+    "<!-- <h4 class=\"media-heading\">{{item.label || 'Sorry, there is no title available in your preferred languages'}}</h4> -->\n" +
+    "\n" +
+    "    <br />\n" +
+    "    <span bind-html-unsafe=\"item.comment || 'Sorry, there is no description available in your preferred languages' | typeaheadHighlight:searchString\"></span>\n" +
+    "    <hr />\n" +
+    "    <ul class=\"list-inline\">\n" +
+    "        <li ng-repeat=\"resource in item.resources\" ng-show=\"resource.items.length\">\n" +
+    "            <a href=\"\" ng-click=\"item.showTab=(item.showTab===$index ? -1 : $index)\"><span class=\"label\" ng-class=\"item.showTab===$index ? 'label-success' : 'label-default'\">{{resource.items.length}} {{resource.label}}</span></a>\n" +
+    "        </li>\n" +
+    "    </ul>\n" +
+    "\n" +
+    "    <div style=\"margin-top: 5px\">\n" +
+    "        <div ng-repeat=\"resource in item.resources\">\n" +
+    "            <div class=\"panel panel-default\" ng-show=\"$index===item.showTab\" ng-init=\"dists=resource.items\">\n" +
+    "                <div class=\"panel-heading\">{{resource.label}}</div>\n" +
+    "                <div class=\"panel-body\">\n" +
+    "                    <div ng-include=\"resource.template\"></div>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "</div>\n" +
+    "");
+}]);
+
+angular.module("template/dataset-browser/dataset-list.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/dataset-browser/dataset-list.html",
+    "<!-- <ul class=\"media-list\"> -->\n" +
+    "    <li class=\"media\" ng-repeat=\"item in items\">\n" +
+    "        <a class=\"pull-left\" href=\"#\">\n" +
+    "            <div class=\"thumbnail thumbnail-center\" style=\"width: 100px; height: 100px;\">\n" +
+    "                <div class=\"thumbnail-wrapper\">\n" +
+    "                    <img ng-src=\"{{item.depiction}}\">\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "        </a>\n" +
+    "\n" +
+    "        <div class=\"media-body\">\n" +
+    "\n" +
+    "            <b>{{item.label || 'Sorry, there is no title available in your preferred languages'}}</b> <a href=\"{{item.id}}\" target=\"_blank\"><span class=\"glyphicon glyphicon-new-window\"></span></a>\n" +
+    "            <br />\n" +
+    "            <span bind-html-unsafe=\"item.comment || 'Sorry, there is no description available in your preferred languages' | typeaheadHighlight:searchString\"></span>\n" +
+    "            <hr />\n" +
+    "            <ul class=\"list-inline\">\n" +
+    "                <li ng-repeat=\"resource in item.resources\" ng-show=\"resource.items.length\">\n" +
+    "                    <a href=\"\" ng-click=\"item.showTab=(item.showTab===$index ? -1 : $index)\"><span class=\"label\" ng-class=\"item.showTab===$index ? 'label-success' : 'label-default'\">{{resource.items.length}} {{resource.label}}</span></a>\n" +
+    "                </li>\n" +
+    "            </ul>\n" +
+    "\n" +
+    "            <div style=\"margin-top: 5px\">\n" +
+    "                <div ng-repeat=\"resource in item.resources\">\n" +
+    "                    <div class=\"panel panel-default\" ng-show=\"$index===item.showTab\" ng-init=\"dists=resource.items\">\n" +
+    "                        <div class=\"panel-heading\">{{resource.label}}</div>\n" +
+    "                        <div class=\"panel-body\">\n" +
+    "                            <div ng-include=\"resource.template\"></div>\n" +
+    "                        </div>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
+    "\n" +
+    "    </li>\n" +
+    "    <li ng-show=\"!items.length\" class=\"alert alert-danger\" style=\"text-align: center\" role=\"alert\">No results</li>\n" +
+    "<!-- </ul> -->\n" +
+    "");
+}]);
+
+angular.module("template/dataset-browser/distribution-list.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/dataset-browser/distribution-list.html",
+    "<ul class=\"list-inline\">\n" +
+    "    <li ng-repeat=\"dist in dists\">\n" +
+    "        <a class=\"btn btn-primary\" ng-init=\"href=context.buildAccessUrl(dist.accessUrl, dist.graphs)\" ng-href=\"{{href}}\" target=\"_blank\" ng-click=\"context.onSelect({context: context, dataset: item, resource: resource, distribution: dist})\">\n" +
+    "            {{dist.accessUrl}}\n" +
+    "            <ul style=\"list-style-type: none;\">\n" +
+    "                <li ng-repeat=\"graph in dist.graphs\">{{graph}}</li>\n" +
+    "            </ul>\n" +
+    "        </a>\n" +
+    "    </li>\n" +
+    "</ul>\n" +
+    "");
+}]);
+
 angular.module("template/facet-list/facet-list.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("template/facet-list/facet-list.html",
     "<div>\n" +
-    "<!--     <H2>Facets</H2> -->\n" +
     "\n" +
+    "    <!-- Notification when service is missing -->\n" +
+    "    <div ng-if=\"!ls.ctrl.listService\" class=\"alert alert-info\">\n" +
+    "        <span class=\"glyphicon glyphicon-exclamation-sign\"></span>\n" +
+    "        No service configured for the facet list.\n" +
+    "    </div>\n" +
+    "\n" +
+    "    <!-- Breadcrumb -->\n" +
     "    <breadcrumb sparql-service=\"sparqlService\" ng-model=\"breadcrumb\"></breadcrumb>\n" +
     "\n" +
-    "    <!-- <div class=\"input-group\">\n" +
-    "        <button type=\"submit\" class=\"btn btn-default\" type=\"button\"><span class=\"glyphicon glyphicon-search\"></span></button>\n" +
-    "    </div> -->\n" +
-    "\n" +
-    "<!--     <div class=\"alert alert-success\" role=\"alert\" style=\"margin: 0px; padding: 0 0 5px 0px\"> -->\n" +
-    "\n" +
-    "<div>\n" +
-    "        <form role=\"form\" ng-submit=\"filterString=filterModel; listFilter.offset=0\" novalidate>\n" +
-    "            <div class=\"input-group\">\n" +
-    "                <input ng-model=\"filterModel\" type=\"text\" class=\"form-control facet-filter\" placeholder=\"Find ...\">\n" +
-    "                <span class=\"input-group-btn facet-filter-submit\">\n" +
-    "                    <button type=\"submit\" class=\"btn btn-default\" type=\"button\"><span class=\"glyphicon glyphicon-search\"></span></button>\n" +
-    "                </span>\n" +
+    "    <form role=\"form\" class=\"form-inline\" ng-submit=\"ls.ctrl.filter.concept=filterModel; listFilter.offset=0\" novalidate>\n" +
+    "        <div class=\"form-group\">\n" +
+    "            <div class=\"col-sm-7\">\n" +
+    "                <div class=\"input-group\">\n" +
+    "                    <input ng-model=\"filterModel\" type=\"text\" class=\"form-control facet-filter\" placeholder=\"Find ...\">\n" +
+    "                    <span ng-if=\"ls.ctrl.filter.concept\" class=\"input-group-btn facet-filter-submit\">\n" +
+    "                        <button class=\"btn btn-default\" type=\"button\" ng-click=\"ls.ctrl.filter.concept=''\"><span class=\"glyphicon glyphicon glyphicon-remove-circle\"></span></button>\n" +
+    "                    </span>\n" +
+    "                    <span class=\"input-group-btn facet-filter-submit\">\n" +
+    "                        <button type=\"submit\" class=\"btn btn-default\" type=\"button\"><span class=\"glyphicon glyphicon-search\"></span></button>\n" +
+    "                    </span>\n" +
+    "                </div>\n" +
     "            </div>\n" +
-    "        </form>\n" +
     "\n" +
-    "        <div ng-show=\"filterString.length > 0\" style=\"margin: 5px 0 0 10px; color: #aaa;\"><span ng-show=\"loading.data || loading.pageCount\">Filtering by</span><span ng-hide=\"loading.data || loading.pageCount\">Filtered by </span> '{{filterString}}'</div>\n" +
-    "</div>\n" +
-    "<!--     </div> -->\n" +
+    "            <div class=\"col-sm-5\">\n" +
+    "                <div class=\"input-group\" ng-init=\"showOptions=[{value: 10, label: '10'}, {value: 25, label: '25'}, {value: 50, label: '50'}, {value: 100, label: '100'}]\">\n" +
+    "                    <span class=\"input-group-addon\">Show </span>\n" +
+    "                    <select class=\"form-control\" type=\"text\" ng-model=\"ls.ctrl.filter.limit\"  ng-model-options=\"showOptions\" ng-options=\"option.value as option.label for option in showOptions\"></select>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "        </div>\n" +
     "\n" +
+    "    </form>\n" +
     "\n" +
+    "    <div ng-show=\"ls.ctrl.filter.concept.length > 0\" style=\"margin: 5px 0 0 10px; color: #aaa;\"><span ng-show=\"ls.loading.data || ls.loading.pageCount\">Filtering by</span><span ng-hide=\"ls.loading.data || ls.loading.pageCount\">Filtered by </span> '{{ls.ctrl.filter.concept}}'</div>\n" +
     "\n" +
+    "    <!-- Navigation buttons -->\n" +
     "    <div style=\"width: 100%\">\n" +
     "        <button ng-show=\"!showConstraints && facetValuePath\" class=\"btn btn-default facet-list-item-btn pull-left\" role=\"button\" ng-click=\"breadcrumb.property = null\"><span class=\"glyphicon glyphicon-chevron-left\"></span> Back</button>\n" +
     "        <button ng-show=\"!showConstraints && !facetValuePath && !breadcrumb.pathHead.getPath().isEmpty()\" class=\"btn btn-default facet-list-item-btn pull-left\" role=\"button\" ng-click=\"breadcrumb.pathHead = breadcrumb.pathHead.up()\"><span class=\"glyphicon glyphicon-chevron-left\"></span> Up</button>\n" +
@@ -2416,39 +3238,73 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "        <div class=\"clearfix\"></div>\n" +
     "    </div>\n" +
     "\n" +
-    "<!--     <div ng-show=\"!showConstraints\" class=\"facets alert alert-info\" role=\"alert\" style=\"margin: 0px; padding: 0px\"> -->\n" +
+    "    <!-- TODO Loading data icon -->\n" +
+    "    <!-- Paginator -->\n" +
+    "    <div style=\"width: 100%; text-align: center\">\n" +
+    "        <span ng-show=\"ls.loading.pageCount\" class=\"glyphicon glyphicon-refresh\"></span>\n" +
     "\n" +
-    "        <jassa-list ng-show=\"!showConstraints\" list-service=\"listService\" list-filter=\"listFilter\" list-class=\"'list-group facet-list'\" loading=\"loading\" pagination-options=\"paginationOptions\">\n" +
-    "            <li ng-show=\"!items.length\" class=\"list-group-item facet-list-item\" style=\"text-align: center\">\n" +
-    "                <button class=\"btn btn-default btn-label facet-list-item-btn disabled\" type=\"button\">\n" +
-    "                    No results\n" +
+    "        <pagination ng-show=\"ls.state.paging.numPages > 1\" class=\"pagination pagination-sm\" paging-model=\"ls\" paging-style=\"pagingStyle\"></pagination>\n" +
+    "    </div>\n" +
+    "\n" +
+    "    <!-- Pagination status -->\n" +
+    "    <span style=\"margin: 5px 0 0 10px; color: #aaa;\">\n" +
+    "    Showing {{ls.state.items.length}} entries in the positions {{(ls.state.paging.currentPage - 1) * ls.state.filter.limit + (ls.state.items.length ? 1 : 0)}} - {{(ls.state.paging.currentPage - 1) * ls.state.filter.limit + ls.state.items.length}} out of {{ls.state.paging.totalItems}} items in total.\n" +
+    "    </span>\n" +
+    "\n" +
+    "    <ul ng-show=\"!ls.state.items.length\" class=\"list-group facet-list\">\n" +
+    "        <li class=\"list-group-item facet-list-item\" style=\"text-align: center\">\n" +
+    "            <button class=\"btn btn-default btn-label facet-list-item-btn disabled\" type=\"button\">\n" +
+    "                No results\n" +
+    "            </button>\n" +
+    "        </li>\n" +
+    "    </ul>\n" +
+    "\n" +
+    "    <!-- Data list -->\n" +
+    "    <ul ng-show=\"!showConstraints && !ls.loading.data\" class=\"list-group facet-list\">\n" +
+    "        <li ng-repeat=\"item in ls.state.items\" class=\"list-group-item facet-list-item visible-on-hover-parent\" ng-class=\"facetValuePath==null?'facet':'facet-value'\">\n" +
+    "\n" +
+    "            <div ng-show=\"facetValuePath==null\" class=\"input-group\">\n" +
+    "\n" +
+    "                <button style=\"text-align: left; width: 100%\" class=\"btn btn-default btn-label facet-list-item-btn\" type=\"button\" ng-click=\"breadcrumb.property = item.property.getUri()\">\n" +
+    "                    <span class=\"glyphicon glyphicon glyphicon-record\"></span>\n" +
+    "                    {{item.labelInfo.displayLabel || NodeUtils.toPrettyString(item.property)}}\n" +
+    "                    <span class=\"counter\"> {{item.valueCountInfo.hasMoreItems ? '...' : '' + item.valueCountInfo.count}}</span>\n" +
     "                </button>\n" +
-    "            </li>\n" +
-    "            <li ng-repeat=\"item in items\" class=\"list-group-item facet-list-item\" ng-class=\"$parent.$parent.facetValuePath==null?'facet':'facet-value'\">\n" +
     "\n" +
-    "                <div ng-show=\"$parent.$parent.facetValuePath==null\">\n" +
-    "                    <button style=\"text-align: left;\" class=\"btn btn-default btn-label facet-list-item-btn\" type=\"button\" ng-click=\"$parent.$parent.breadcrumb.property = item.property.getUri()\">\n" +
-    "                        <span class=\"glyphicon glyphicon glyphicon-record\"></span>\n" +
-    "                        {{item.labelInfo.displayLabel || $parent.$parent.NodeUtils.toPrettyString(item.property)}}\n" +
-    "                        <span class=\"counter\"> {{item.valueCountInfo.hasMoreItems ? '...' : '' + item.valueCountInfo.count}}</span>\n" +
-    "                    </button>\n" +
-    "                    <button class=\"btn btn-default facet-list-item-btn pull-right\" type=\"button\" ng-click=\"$parent.$parent.descendFacet(item.property)\">\n" +
-    "                        <span class=\"glyphicon glyphicon-chevron-down\"></span>\n" +
-    "                    </button>\n" +
-    "                    <div class=\"clearfix\"></div>\n" +
+    "                <div class=\"input-group-btn\">\n" +
+    "                    <ul class=\"list-inline\">\n" +
+    "                        <li ng-repeat=\"plugin in plugins\" compile=\"plugin\">\n" +
+    "<!--                             <ng-include src=\"plugin\"></ng-include> -->\n" +
+    "                        </li>\n" +
+    "                        <li>\n" +
+    "                            <button class=\"btn btn-default facet-list-item-btn visible-on-hover-child\" type=\"button\" ng-click=\"descendFacet(item.property)\">\n" +
+    "                                <span class=\"glyphicon glyphicon-chevron-right\"></span>\n" +
+    "                            </button>\n" +
+    "                        </li>\n" +
+    "                    </ul>\n" +
     "                </div>\n" +
+    "            </div>\n" +
     "\n" +
-    "                <div ng-show=\"$parent.$parent.facetValuePath!=null\">\n" +
-    "                    <button ng-class=\"item.isConstrainedEqual ? 'btn-primary' : 'btn-default'\" style=\"margin-bottom: -1px; text-align: left;\" class=\"btn btn-label facet-list-item-btn\" type=\"button\" ng-click=\"$parent.$parent.toggleConstraint(item.node)\">\n" +
-    "                        <span class=\"glyphicon glyphicon glyphicon-record facet-value\"></span>\n" +
-    "                        {{$parent.$parent.NodeUtils.toPrettyString(item.node)}}\n" +
-    "                        <span class=\"counter\"> {{item.countInfo.hasMoreItems ? '...' : '' + item.countInfo.count}}</span>\n" +
-    "                    </button>\n" +
-    "                </div>\n" +
+    "<!--             <ul ng-show=\"plugins.length > 0\" class=\"list-inline\"> -->\n" +
+    "<!--                 <li ng-repeat=\"plugin in plugins\"> -->\n" +
+    "<!--                     <div compile=\"plugin\"></div> -->\n" +
+    "<!--                 </li> -->\n" +
+    "<!--             </ul> -->\n" +
     "\n" +
-    "            </li>\n" +
-    "        </jassa-list>\n" +
+    "<!--                 <div class=\"clearfix\"></div> -->\n" +
     "\n" +
+    "            <div ng-show=\"facetValuePath!=null\">\n" +
+    "                <button ng-class=\"item.isConstrainedEqual ? 'btn-primary' : 'btn-default'\" style=\"margin-bottom: -1px; text-align: left;\" class=\"btn btn-label facet-list-item-btn\" type=\"button\" ng-click=\"toggleConstraint(item.node)\">\n" +
+    "                    <span class=\"glyphicon glyphicon glyphicon-record facet-value\"></span>\n" +
+    "                    {{NodeUtils.toPrettyString(item.node)}}\n" +
+    "                    <span class=\"counter\"> {{item.countInfo.hasMoreItems ? '...' : '' + item.countInfo.count}}</span>\n" +
+    "                </button>\n" +
+    "            </div>\n" +
+    "\n" +
+    "        </li>\n" +
+    "    </ul>\n" +
+    "\n" +
+    "    <!-- Constraints -->\n" +
     "    <div class=\"constraints\">\n" +
     "        <constraint-list\n" +
     "            ng-show=\"showConstraints\"\n" +
@@ -2687,9 +3543,7 @@ angular.module("template/jassa-list-browser/jassa-list-browser.html", []).run(["
     "\n" +
     "        <div class=\"col-md-12\">\n" +
     "\n" +
-    "            <jassa-media-list list-service=\"listService\" offset=\"offset\" limit=\"limit\" max-size=\"maxSize\" filter=\"filter\" total-items=\"totalItems\" items=\"items\" refresh=\"langs\" context=\"context\">\n" +
-    "                <ng-include src=\"context.itemTemplate\"></ng-include>\n" +
-    "            </jassa-media-list>\n" +
+    "            <jassa-media-list list-service=\"listService\" offset=\"offset\" limit=\"limit\" max-size=\"maxSize\" filter=\"filter\" total-items=\"totalItems\" items=\"items\" refresh=\"langs\" context=\"context\" item-template=\"itemTemplate\"></jassa-media-list>\n" +
     "\n" +
     "        </div>\n" +
     "    </div>\n" +
@@ -2721,7 +3575,10 @@ angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$tem
     "    </div>\n" +
     "\n" +
     "    <ul class=\"media-list\" style=\"width: 100%;\">\n" +
-    "        <ng-transclude></ng-transclude>\n" +
+    "        <li class=\"media\" ng-repeat=\"item in items\">\n" +
+    "            <div ng-include=\"itemTemplate\" include-replace></div>\n" +
+    "        </li>\n" +
+    "        <li ng-show=\"!items.length\" class=\"alert alert-danger\" style=\"text-align: center\" role=\"alert\">No results</li>\n" +
     "    </ul>\n" +
     "\n" +
     "    <div style=\"width: 100%; text-align: center\">\n" +
