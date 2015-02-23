@@ -2,10 +2,10 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-02-18
+ * Version: 0.9.0-SNAPSHOT - 2015-02-23
  * License: MIT
  */
-angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.include-replace","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
+angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.replace","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
 angular.module("ui.jassa.tpls", ["template/breadcrumb/breadcrumb.html","template/constraint-list/constraint-list.html","template/dataset-browser/dataset-browser.html","template/dataset-browser/dataset-list-item.html","template/dataset-browser/distribution-list.html","template/facet-list/facet-list.html","template/facet-tree/facet-dir-content.html","template/facet-tree/facet-dir-ctrl.html","template/facet-tree/facet-tree-item.html","template/facet-tree/facet-tree-root.html","template/facet-value-list/facet-value-list.html","template/jassa-list/jassa-list.html","template/jassa-list-browser/jassa-list-browser.html","template/jassa-media-list/jassa-media-list.html","template/lang-select/lang-select.html","template/list-search/list-search.html","template/sparql-grid/sparql-grid.html","template/template-list/template-list.html"]);
 angular.module('ui.jassa.auto-focus', [])
 
@@ -437,7 +437,7 @@ angular.module('ui.jassa.constraint-list', [])
 ;
 
 //angular.module('DatasetBrowser', ['ui.jassa', 'ui.bootstrap', 'ui.sortable', 'ui.keypress', 'ngSanitize'])
-angular.module('ui.jassa.dataset-browser', ['ui.jassa.include-replace'])
+angular.module('ui.jassa.dataset-browser', ['ui.jassa.replace'])
 
 .controller('DatasetBrowserCtrl', ['$scope', '$q', function($scope, $q) {
 
@@ -1642,20 +1642,6 @@ angular.module('ui.jassa.facet-value-list', [])
 ;
 
 
-angular.module('ui.jassa.include-replace', [])
-
-.directive('includeReplace', function () {
-    return {
-        require: 'ngInclude',
-        restrict: 'A', /* optional */
-        link: function (scope, el, attrs) {
-            el.replaceWith(el.children());
-        }
-    };
-})
-
-;
-
 angular.module('ui.jassa.jassa-list', [])
 
 .controller('JassaListCtrl', ['$scope', '$q', '$timeout', function($scope, $q, $timeout) {
@@ -1858,7 +1844,7 @@ angular.module('ui.jassa.jassa-list-browser', [])
 
 ;
 
-angular.module('ui.jassa.jassa-media-list', ['ui.jassa.include-replace'])
+angular.module('ui.jassa.jassa-media-list', ['ui.jassa.replace'])
 
 .controller('JassaMediaListCtrl', ['$scope', '$q', '$timeout', function($scope, $q, $timeout) {
     $scope.currentPage = 1;
@@ -2518,6 +2504,20 @@ angular.module('ui.jassa.pointer-events-scroll-fix', [])
 
 ;
 
+
+angular.module('ui.jassa.replace', [])
+
+.directive('replace', function () {
+    return {
+        //require: 'ngInclude',
+        restrict: 'A', /* optional */
+        link: function (scope, el, attrs) {
+            el.replaceWith(el.children());
+        }
+    };
+})
+
+;
 
 angular.module('ui.jassa.resizable', [])
 
@@ -3576,7 +3576,7 @@ angular.module("template/jassa-media-list/jassa-media-list.html", []).run(["$tem
     "\n" +
     "    <ul class=\"media-list\" style=\"width: 100%;\">\n" +
     "        <li class=\"media\" ng-repeat=\"item in items\">\n" +
-    "            <div ng-include=\"itemTemplate\" include-replace></div>\n" +
+    "            <div ng-include=\"itemTemplate\" replace></div>\n" +
     "        </li>\n" +
     "        <li ng-show=\"!items.length\" class=\"alert alert-danger\" style=\"text-align: center\" role=\"alert\">No results</li>\n" +
     "    </ul>\n" +
