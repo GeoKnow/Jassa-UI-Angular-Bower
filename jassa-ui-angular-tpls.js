@@ -3303,7 +3303,7 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "            <div ng-show=\"facetValuePath!=null\">\n" +
     "                <button ng-class=\"item.isConstrainedEqual ? 'btn-primary' : 'btn-default'\" style=\"margin-bottom: -1px; text-align: left;\" class=\"btn btn-label facet-list-item-btn\" type=\"button\" ng-click=\"toggleConstraint(item.node)\">\n" +
     "                    <span class=\"glyphicon glyphicon glyphicon-record facet-value\"></span>\n" +
-    "                    {{NodeUtils.toPrettyString(item.node)}}\n" +
+    "                    {{item.labelInfo.displayLabel || NodeUtils.toPrettyString(item.node)}}\n" +
     "                    <span class=\"counter\"> {{item.countInfo.hasMoreItems ? '...' : '' + item.countInfo.count}}</span>\n" +
     "                </button>\n" +
     "            </div>\n" +
