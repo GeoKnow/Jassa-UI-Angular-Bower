@@ -332,12 +332,18 @@ angular.module('ui.jassa.constraint-list', [])
 
     var reset = function() {
         if($scope.sparqlService && $scope.facetTreeConfig) {
-            var labelConfig = $scope.facetTreeConfig.getBestLiteralConfig();
-            var mappedConcept = jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(labelConfig);
+            //var labelConfig = $scope.facetTreeConfig.getBestLiteralConfig();
+            //var mappedConcept = jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(labelConfig);
+            /*
             var ls = jassa.sponate.LookupServiceUtils.createLookupServiceMappedConcept($scope.sparqlService, mappedConcept);
             ls = new jassa.service.LookupServiceTransform(ls, function(val) {
                 return val.displayLabel || val.id;
             });
+            */
+
+            var literalPreference = $scope.facetTreeConfig.getBestLiteralConfig().getLiteralPreference();
+            var ls = jassa.sponate.LookupServiceUtils.createLookupServiceNodeLabels($scope.sparqlService, literalPreference);
+
             $scope.constraintLabelsLookupService = new jassa.facete.LookupServiceConstraintLabels(ls);
         }
     };
@@ -349,6 +355,7 @@ angular.module('ui.jassa.constraint-list', [])
             var constraints = $scope.constraintManager ? $scope.constraintManager.getConstraints() : [];
             var promise = $scope.constraintLabelsLookupService.lookup(constraints);
 
+            //$q.when(promise).then(function(map) {
             $q.when(promise).then(function(map) {
 
                 var items =_(constraints).map(function(constraint) {
@@ -363,6 +370,8 @@ angular.module('ui.jassa.constraint-list', [])
                 });
 
                 $scope.constraints = items;
+            }, function(e) {
+                throw e;
             });
         }
     };
@@ -425,7 +434,6 @@ angular.module('ui.jassa.constraint-list', [])
         require: 'constraintList',
         scope: {
             sparqlService: '=',
-            labelService: '=',
             facetTreeConfig: '=',
             onSelect: '&select'
         },

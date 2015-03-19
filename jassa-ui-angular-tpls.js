@@ -333,12 +333,18 @@ angular.module('ui.jassa.constraint-list', [])
 
     var reset = function() {
         if($scope.sparqlService && $scope.facetTreeConfig) {
-            var labelConfig = $scope.facetTreeConfig.getBestLiteralConfig();
-            var mappedConcept = jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(labelConfig);
+            //var labelConfig = $scope.facetTreeConfig.getBestLiteralConfig();
+            //var mappedConcept = jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(labelConfig);
+            /*
             var ls = jassa.sponate.LookupServiceUtils.createLookupServiceMappedConcept($scope.sparqlService, mappedConcept);
             ls = new jassa.service.LookupServiceTransform(ls, function(val) {
                 return val.displayLabel || val.id;
             });
+            */
+
+            var literalPreference = $scope.facetTreeConfig.getBestLiteralConfig().getLiteralPreference();
+            var ls = jassa.sponate.LookupServiceUtils.createLookupServiceNodeLabels($scope.sparqlService, literalPreference);
+
             $scope.constraintLabelsLookupService = new jassa.facete.LookupServiceConstraintLabels(ls);
         }
     };
@@ -350,6 +356,7 @@ angular.module('ui.jassa.constraint-list', [])
             var constraints = $scope.constraintManager ? $scope.constraintManager.getConstraints() : [];
             var promise = $scope.constraintLabelsLookupService.lookup(constraints);
 
+            //$q.when(promise).then(function(map) {
             $q.when(promise).then(function(map) {
 
                 var items =_(constraints).map(function(constraint) {
@@ -364,6 +371,8 @@ angular.module('ui.jassa.constraint-list', [])
                 });
 
                 $scope.constraints = items;
+            }, function(e) {
+                throw e;
             });
         }
     };
@@ -426,7 +435,6 @@ angular.module('ui.jassa.constraint-list', [])
         require: 'constraintList',
         scope: {
             sparqlService: '=',
-            labelService: '=',
             facetTreeConfig: '=',
             onSelect: '&select'
         },
@@ -3300,8 +3308,9 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "\n" +
     "<!--                 <div class=\"clearfix\"></div> -->\n" +
     "\n" +
-    "            <div ng-show=\"facetValuePath!=null\">\n" +
-    "                <button ng-class=\"item.isConstrainedEqual ? 'btn-primary' : 'btn-default'\" style=\"margin-bottom: -1px; text-align: left;\" class=\"btn btn-label facet-list-item-btn\" type=\"button\" ng-click=\"toggleConstraint(item.node)\">\n" +
+    "<!-- style=\"margin-bottom: -1px; text-align: left;\" -->\n" +
+    "            <div ng-show=\"facetValuePath!=null\" style=\"width: 100%\">\n" +
+    "                <button ng-class=\"item.isConstrainedEqual ? 'btn-primary' : 'btn-default'\" style=\"text-align: left; width: 100%\" class=\"btn btn-label facet-list-item-btn\" type=\"button\" ng-click=\"toggleConstraint(item.node)\">\n" +
     "                    <span class=\"glyphicon glyphicon glyphicon-record facet-value\"></span>\n" +
     "                    {{item.labelInfo.displayLabel || NodeUtils.toPrettyString(item.node)}}\n" +
     "                    <span class=\"counter\"> {{item.countInfo.hasMoreItems ? '...' : '' + item.countInfo.count}}</span>\n" +
