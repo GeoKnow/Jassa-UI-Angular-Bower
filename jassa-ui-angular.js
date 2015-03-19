@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-03-10
+ * Version: 0.9.0-SNAPSHOT - 2015-03-19
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.replace","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -454,9 +454,8 @@ angular.module('ui.jassa.dataset-browser', ['ui.jassa.replace'])
             'o': 'http://example.org/ontology/'
         });
 
-        var labelConfig = new jassa.sparql.BestLabelConfig(langs);
-        var labelTemplateFn = function() { return jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(labelConfig); };
-        var commentTemplateFn = function() { return jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(new jassa.sparql.BestLabelConfig(langs, [jassa.vocab.rdfs.comment])); };
+        var labelTemplateFn = function() { return jassa.sponate.MappedConceptUtils.createMappedConceptLiteralPreference(new jassa.sparql.LiteralPreference(langs)); };
+        var commentTemplateFn = function() { return jassa.sponate.MappedConceptUtils.createMappedConceptLiteralPreference(new jassa.sparql.LiteralPreference(langs, [jassa.vocab.rdfs.comment])); };
 
         var template = [{
             id: '?s',
@@ -507,8 +506,8 @@ angular.module('ui.jassa.dataset-browser', ['ui.jassa.replace'])
         var result = store.primaryDatasets.getListService();
 
         result = new jassa.service.ListServiceTransformConceptMode(result, function() {
-            var searchConfig = new jassa.sparql.BestLabelConfig(langs, [jassa.vocab.rdfs.comment, jassa.vocab.rdfs.label]);
-            var labelRelation = jassa.sparql.LabelUtils.createRelationPrefLabels(searchConfig);
+            var searchConfig = new jassa.sparql.LiteralPreference(langs, [jassa.vocab.rdfs.comment, jassa.vocab.rdfs.label]);
+            var labelRelation = jassa.sparql.LabelUtils.createRelationLiteralPreference(searchConfig);
             return labelRelation;
         });
 
@@ -628,6 +627,7 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
  */
 .controller('FacetListCtrl', ['$rootScope', '$scope', '$q', '$timeout', function($rootScope, $scope, $q, $timeout) {
 
+    $scope.plugins = $scope.plugins || [];
 
     var listServiceWatcher = new ListServiceWatcher($scope, $q);
 
@@ -741,54 +741,40 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
         var isConfigured = $scope.sparqlService && $scope.facetTreeConfig;
 
         if(isConfigured) {
-            var facetValueService = new jassa.facete.FacetValueService($scope.sparqlService, $scope.facetTreeConfig.getFacetConfig(), 5000000);
+            var labelPreference = new jassa.sparql.LiteralPreference();
+
+            var facetValueService = jassa.facete.FacetValueServiceBuilder
+                .core($scope.sparqlService, $scope.facetTreeConfig.getFacetConfig(), 5000000)
+                .labelConfig(labelPreference)
+                .wrapListService(function(listService) {
+                    r = new jassa.service.ListServiceTransformItems(listService, function(entries) {
+
+                        var cm = $scope.facetTreeConfig.getFacetConfig().getConstraintManager();
+                        var cs = cm.getConstraintsByPath(path);
+                        var values = {};
+                        cs.forEach(function(c) {
+                            if(c.getName() === 'equals') {
+                                values[c.getValue()] = true;
+                            }
+                        });
+
+                        entries.forEach(function(entry) {
+                            var item = entry.val;
+
+                            var isConstrained = values['' + item.node];
+                            item.isConstrainedEqual = isConstrained;
+                        });
+                        //$scope.facetValues = items;
+                        return entries;
+                    });
+
+                    return r;
+                })
+                .create();
 
             $q.when(facetValueService.prepareTableService(path, true)).then(function(listService) {
 
-                var searchString = $scope.listFilter.concept;
-
-                var fnTransformSearch = function(searchString) {
-                    var r;
-                    if(searchString) {
-
-                        var bestLiteralConfig = new jassa.sparql.BestLabelConfig();
-                        var relation = jassa.sparql.LabelUtils.createRelationPrefLabels(bestLiteralConfig);
-                        // TODO Make it configurable to whether scan URIs too (the true argument)
-                        r = jassa.sparql.KeywordSearchUtils.createConceptRegex(relation, searchString, true);
-                        //var result = sparql.KeywordSearchUtils.createConceptBifContains(relation, searchString);
-                    } else {
-                        r = null;
-                    }
-
-                    return r;
-                };
-
-                listService = new jassa.service.ListServiceTransformConcept(listService, fnTransformSearch);
-
-
-
-                listService = new jassa.service.ListServiceTransformItems(listService, function(entries) {
-
-                    var cm = $scope.facetTreeConfig.getFacetConfig().getConstraintManager();
-                    var cs = cm.getConstraintsByPath(path);
-                    var values = {};
-                    cs.forEach(function(c) {
-                        if(c.getName() === 'equals') {
-                            values[c.getValue()] = true;
-                        }
-                    });
-
-                    entries.forEach(function(entry) {
-                        var item = entry.val;
-
-                        var isConstrained = values['' + item.node];
-                        item.isConstrainedEqual = isConstrained;
-                    });
-                    //$scope.facetValues = items;
-                    return entries;
-                });
-
-
+                //var searchString = $scope.listFilter.concept;
                 $scope.listService = listService;
             });
         }
@@ -807,6 +793,27 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
             console.log('FACET VALUES\n ' + JSON.stringify(items, null, 4));
         });
         */
+
+//      var fnTransformSearch = function(searchString) {
+//          var r;
+//          if(searchString) {
+//
+//              var bestLiteralConfig = new jassa.sparql.BestLabelConfig();
+//              var relation = jassa.sparql.LabelUtils.createRelationPrefLabels(bestLiteralConfig);
+//              // TODO Make it configurable to whether scan URIs too (the true argument)
+//              r = jassa.sparql.KeywordSearchUtils.createConceptRegex(relation, searchString, true);
+//              //var result = sparql.KeywordSearchUtils.createConceptBifContains(relation, searchString);
+//          } else {
+//              r = null;
+//          }
+//
+//          return r;
+//      };
+//
+//      listService = new jassa.service.ListServiceTransformConcept(listService, fnTransformSearch);
+
+
+
 
     };
 
@@ -912,7 +919,7 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
             listFilter: '=?',
             breadcrumb: '=?uiModel', // The visible facet / facetValue
             pathHead: '=?',
-            plugins: '=',
+            plugins: '=?',
             pluginContext: '=?', //plugin context
             pagingStyle: '=?',
             loading: '=?',
