@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-03-19
+ * Version: 0.9.0-SNAPSHOT - 2015-03-25
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.replace","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -97,18 +97,19 @@ angular.module('ui.jassa.breadcrumb', [])
     };
 
     var update = function() {
-        var sparqlService = $scope.sparqlService;
-
         var propertyName = $scope.model.property;
         var property = (propertyName == null || propertyName === true) ? null : jassa.rdf.NodeFactory.createUri(propertyName);
 
         var pathHead = $scope.model.pathHead;
         var path = pathHead ? pathHead.getPath() : null;
 
-        if(sparqlService && path) {
+        var ls = $scope.lookupService;
+
+        if(ls && path) {
             var steps = path.getSteps();
 
-            var ls = jassa.sponate.LookupServiceUtils.createLookupServiceNodeLabels(sparqlService);
+            //var ls = jassa.sponate.LookupServiceUtils.createLookupServiceNodeLabels(sparqlService);
+
             // Value
             ls = new jassa.service.LookupServiceTransform(ls, function(val) { return val.displayLabel; });
             //ls = new jassa.service.LookupServicePathLabels(ls);
@@ -162,7 +163,7 @@ angular.module('ui.jassa.breadcrumb', [])
         update();
     }, true);
 
-    $scope.$watch('sparqlService', function() {
+    $scope.$watch('lookupService', function() {
         update();
     });
 
@@ -269,7 +270,8 @@ angular.module('ui.jassa.breadcrumb', [])
         replace: true,
         templateUrl: 'template/breadcrumb/breadcrumb.html',
         scope: {
-            sparqlService: '=',
+            //sparqlService: '=',
+            lookupService: '=',
             model: '=ngModel',
             maxSize: '=?',
             onSelect: '&select'
@@ -326,27 +328,24 @@ angular.module('ui.jassa.compile', [])
 
 angular.module('ui.jassa.constraint-list', [])
 
-.controller('ConstraintListCtrl', ['$scope', '$q', '$rootScope', function($scope, $q, $rootScope) {
+.controller('ConstraintListCtrl', ['$scope', '$q', '$rootScope', '$dddi', function($scope, $q, $rootScope, $dddi) {
 
-    var self = this;
+    var dddi = $dddi($scope);
 
-    var reset = function() {
-        if($scope.sparqlService && $scope.facetTreeConfig) {
-            //var labelConfig = $scope.facetTreeConfig.getBestLiteralConfig();
-            //var mappedConcept = jassa.sponate.MappedConceptUtils.createMappedConceptBestLabel(labelConfig);
-            /*
-            var ls = jassa.sponate.LookupServiceUtils.createLookupServiceMappedConcept($scope.sparqlService, mappedConcept);
-            ls = new jassa.service.LookupServiceTransform(ls, function(val) {
-                return val.displayLabel || val.id;
-            });
-            */
+    dddi.register('constraintLabelsLookupService', ['lookupService',
+        function(lookupService) {
+            var r = new jassa.facete.LookupServiceConstraintLabels(ls);
+            return r;
+        }]);
 
-            var literalPreference = $scope.facetTreeConfig.getBestLiteralConfig().getLiteralPreference();
-            var ls = jassa.sponate.LookupServiceUtils.createLookupServiceNodeLabels($scope.sparqlService, literalPreference);
+    dddi.register('constraints', ['=constraintManager.getConstraints()',
+        function(constraints) {
+            return constraints;
+        }]);
 
-            $scope.constraintLabelsLookupService = new jassa.facete.LookupServiceConstraintLabels(ls);
-        }
-    };
+    dddi.register('listService', ['constraints', 'constraintLabelsLookupService', function() {
+
+    }]);
 
     var refresh = function() {
 
@@ -376,42 +375,6 @@ angular.module('ui.jassa.constraint-list', [])
         }
     };
 
-    var renderConstraint = function(constraint) {
-        var type = constraint.getName();
-
-        var result;
-        switch(type) {
-        case 'equals':
-            var pathStr = ''  + constraint.getDeclaredPath();
-            if(pathStr === '') {
-                pathStr = '()';
-            }
-            result = pathStr + ' = ' + constraint.getValue();
-        break;
-        default:
-            result = constraint;
-        }
-
-        return result;
-    };
-
-    $scope.$watch('constraintLabelsLookupService', function() {
-        refresh();
-    });
-
-    $scope.$watch('facetTreeConfig.getFacetConfig().getConstraintManager()', function(cm) {
-        $scope.constraintManager = cm;
-        refresh();
-    }, true);
-
-    $scope.$watch('sparqlService', function() {
-        reset();
-    });
-
-    $scope.$watch('facetTreeConfig.getBestLiteralConfig()', function() {
-        reset();
-    }, true);
-
     $scope.removeConstraint = function(item) {
         $scope.constraintManager.removeConstraint(item.constraint);
     };
@@ -433,8 +396,8 @@ angular.module('ui.jassa.constraint-list', [])
         transclude: false,
         require: 'constraintList',
         scope: {
-            sparqlService: '=',
-            facetTreeConfig: '=',
+            lookupService: '=',
+            constraintManager: '=',
             onSelect: '&select'
         },
         controller: 'ConstraintListCtrl'
@@ -625,7 +588,7 @@ angular.module('ui.jassa.dataset-browser', ['ui.jassa.replace'])
 
 ;
 
-angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-style', 'ui.jassa.paging-model', 'ui.bootstrap']) // ui.bootstrap for paginator
+angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-style', 'ui.jassa.paging-model', 'ui.bootstrap', 'dddi']) // ui.bootstrap for paginator
 
 
 /**
@@ -633,37 +596,69 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
  * Supports nested incoming and outgoing properties
  *
  */
-.controller('FacetListCtrl', ['$rootScope', '$scope', '$q', '$timeout', function($rootScope, $scope, $q, $timeout) {
+.controller('FacetListCtrl', ['$rootScope', '$scope', '$q', '$dddi', function($rootScope, $scope, $q, $dddi) {
 
-    $scope.plugins = $scope.plugins || [];
+    // TODO Rename plugins to facetPlugins
+    // Alternatively, plugins could be tagged to which type they apply
+    $scope.facetPlugins = $scope.facetPlugins || [];
+    $scope.showConstraints = false;
 
     var listServiceWatcher = new ListServiceWatcher($scope, $q);
 
     $scope.ls = listServiceWatcher.watch('listService');
 
-    $scope.$watch(function() {
-        return $scope.listFilter;
-    }, function(listFilter) {
-        if(listFilter != null) {
-            $scope.ls.ctrl.filter = listFilter;
-        }
-    });
-
-
     $scope.pagingStyle = $scope.pagingStyle || {};
-
-
-
-    $scope.showConstraints = false;
-
     $scope.ObjectUtils = jassa.util.ObjectUtils;
-    //$scope.paginationOptions = $scope.paginationOptions || {};
-
     $scope.loading = $scope.loading || {data: false, pageCount: false};
-
     $scope.NodeUtils = jassa.rdf.NodeUtils;
-
     $scope.breadcrumb = $scope.breadcrumb || {};
+
+    $scope.location = null;
+
+
+
+    // Maps to track the filters set for the facets, facet values and the constraints
+    $scope.locationToFilter = new jassa.util.HashMap();
+
+
+    var modes = {
+        constraint: {
+            itemTemplate: 'template/facet-list/facet-list-item-constraint.html',
+            listServiceFn: function() {
+                var r = $scope.constraintService;
+                return r;
+            }
+        },
+        facet: {
+            itemTemplate: 'template/facet-list/facet-list-item-facet.html',
+            listServiceFn: function() {
+                var r = ( $scope.facetService
+                    ? $scope.facetService.prepareListService($scope.breadcrumb.pathHead)
+                    : null );
+
+                return r;
+            }
+        },
+        facetValue: {
+            itemTemplate: 'template/facet-list/facet-list-item-facet-value.html',
+            listServiceFn: function() {
+                var r = ( $scope.facetValueService
+                    ? $scope.facetValueService.prepareTableService($scope.facetValuePath, true)
+                    : null );
+
+                return r;
+            }
+        }
+    };
+
+
+
+    /*
+    $scope.pathToFilter = new jassa.util.HashMap();
+    $scope.pathHeadToFilter = new jassa.util.HashMap();
+    $scope.constraintFilter = {}; //new jassa.util.HashMap();
+    */
+
 
     var defs = {
         pathHead: new jassa.facete.PathHead(new jassa.facete.Path()),
@@ -672,57 +667,19 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
 
     _.defaults($scope.breadcrumb, defs);
 
-    $scope.location = null;
-
-    //$scope.listFilter = $scope.listFilter || { limit: 10, offset: 0, concept: null };
-
-    //$scope.listFilter = $scope.listFilter || { limit: 10, offset: 0, concept: null };// new jassa.service.ListFilter();
-
-    $scope.filterMap = new jassa.util.HashMap();
 
 
     // This property is derived from the values of $scope.facetValueProperty
     $scope.facetValuePath = null;
 
 
-//    $scope.$watch('filterString', function(newValue) {
-//        $scope.listFilter.concept = newValue;
-//    });
+    /*
+     * Actions
+     */
 
-
-    $scope.$watch('location', function() {
-        if($scope.location) {
-            var lf = $scope.filterMap.get($scope.location);
-            if(lf == null) {
-                lf = { limit: 10, offset: 0, concept: null };
-                $scope.filterMap.put($scope.location, lf);
-            }
-
-            $scope.listFilter = lf;
-        }
-
-    });
-
-//    $scope.$watch('listFilter', function(newValue) {
-//        if($scope.location) {
-//
-//            var val = newValue == null
-//                ? null
-//                : {
-//                    concept: newValue.concept,
-//                    limit: newValue.limit,
-//                    offset: newValue.offset
-//                };
-//
-//            filterMap.put($scope.location, val);
-//        }
-//    }, true);
-
-//    $scope.$watch('listFilter.concept', function(newValue) {
-//        $scope.filterModel = newValue;
-//        $scope.filterString = newValue;
-//    });
-
+    /**
+     * Moves to the sub-facets via a property
+     */
     $scope.descendFacet = function(property) {
         var pathHead = $scope.breadcrumb.pathHead;
 
@@ -732,138 +689,57 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
     };
 
 
-    // Creates a path object by appending a property to a pathHead
+    /**
+     * Creates a path object by appending a property to a pathHead
+     */
     var appendProperty = function(pathHead, propertyName) {
         var result = pathHead.getPath().copyAppendStep(new jassa.facete.Step(propertyName, pathHead.isInverse()));
         return result;
     };
 
-//    $scope.showFacetValues = function(property) {
-//    };
 
-    var updateFacetValueService = function() {
 
-        //console.log('Updating facet values');
-        var path = $scope.facetValuePath;
-
-        var isConfigured = $scope.sparqlService && $scope.facetTreeConfig;
-
-        if(isConfigured) {
-            var labelPreference = new jassa.sparql.LiteralPreference();
-
-            var facetValueService = jassa.facete.FacetValueServiceBuilder
-                .core($scope.sparqlService, $scope.facetTreeConfig.getFacetConfig(), 5000000)
-                .labelConfig(labelPreference)
-                .wrapListService(function(listService) {
-                    r = new jassa.service.ListServiceTransformItems(listService, function(entries) {
-
-                        var cm = $scope.facetTreeConfig.getFacetConfig().getConstraintManager();
-                        var cs = cm.getConstraintsByPath(path);
-                        var values = {};
-                        cs.forEach(function(c) {
-                            if(c.getName() === 'equals') {
-                                values[c.getValue()] = true;
-                            }
-                        });
-
-                        entries.forEach(function(entry) {
-                            var item = entry.val;
-
-                            var isConstrained = values['' + item.node];
-                            item.isConstrainedEqual = isConstrained;
-                        });
-                        //$scope.facetValues = items;
-                        return entries;
-                    });
-
-                    return r;
-                })
-                .create();
-
-            $q.when(facetValueService.prepareTableService(path, true)).then(function(listService) {
-
-                //var searchString = $scope.listFilter.concept;
+    /*
+    var updateFacetService = function() {
+        if($scope.facetService) {
+            $q.when($scope.facetService.prepareListService($scope.breadcrumb.pathHead)).then(function(listService) {
                 $scope.listService = listService;
             });
         }
-
-        /*
-        facetValueService.prepareTableService(path, false).then(function(ls) {
-
-            $scope.listService = listService;
-            var bestLabelConfig = new sparql.BestLabelConfig();
-            var labelRelation = sparql.LabelUtils.createRelationPrefLabels(bestLabelConfig);
-            var filterConcept = sparql.KeywordSearchUtils.createConceptRegex(labelRelation, 'Germany', true);
-
-            return ls.fetchItems(filterConcept, 10);
-        }).then(function(items) {
-            items[0].val.bindings[0].get(rdf.NodeFactory.createVar('c_1')).getLiteralValue().should.equal(1094);
-            console.log('FACET VALUES\n ' + JSON.stringify(items, null, 4));
-        });
-        */
-
-//      var fnTransformSearch = function(searchString) {
-//          var r;
-//          if(searchString) {
-//
-//              var bestLiteralConfig = new jassa.sparql.BestLabelConfig();
-//              var relation = jassa.sparql.LabelUtils.createRelationPrefLabels(bestLiteralConfig);
-//              // TODO Make it configurable to whether scan URIs too (the true argument)
-//              r = jassa.sparql.KeywordSearchUtils.createConceptRegex(relation, searchString, true);
-//              //var result = sparql.KeywordSearchUtils.createConceptBifContains(relation, searchString);
-//          } else {
-//              r = null;
-//          }
-//
-//          return r;
-//      };
-//
-//      listService = new jassa.service.ListServiceTransformConcept(listService, fnTransformSearch);
-
-
-
-
     };
+
+    var updateFacetValueService = function() {
+        if($scope.facetValueService) {
+            $q.when($scope.facetValueService.prepareTableService($scope.facetValuePath, true)).then(function(listService) {
+                $scope.listService = listService;
+            });
+        }
+    };
+    */
 
     $scope.toggleConstraint = function(node) {
         var path = $scope.facetValuePath;
+        var constraintManager = $scope.constraintManager;
 
-        var constraintManager = $scope.facetTreeConfig.getFacetConfig().getConstraintManager();
-
-        //var node = item.node;
         var constraint = new jassa.facete.ConstraintEquals(path, node);
 
         // TODO Integrate a toggle constraint method into the filterManager
         constraintManager.toggleConstraint(constraint);
     };
 
+    /*
+     * Refresh
+     */
 
-//    var fetchFacetList = function(path) {
-//        var pathExpansions = $scope.facetTreeConfig.getFacetTreeState().getPathExpansions();
-//        pathExpansions.clear();
-//        pathExpansions.add(path);
-//        //pathExpansions.add(new jassa.facete.Path());
-//
-//        var result = $scope.facetTreeService.fetchFacetTree(path);
-//        return result;
-//    };
-
-    var updateFacetService = function() {
-        //console.log('Updating facets');
-        var isConfigured = $scope.sparqlService && $scope.facetTreeConfig;
-        var facetTreeService = isConfigured ? jassa.facete.FacetTreeServiceUtils.createFacetTreeService($scope.sparqlService, $scope.facetTreeConfig) : null;
-
-        if(facetTreeService != null) {
-            // TODO This may be a hack as we break encapsulation
-            // The question is whether it should be allowed to get the facetService from a facetTreeService
-            var facetService = facetTreeService.facetService;
-
-            $q.when(facetService.prepareListService($scope.breadcrumb.pathHead)).then(function(listService) {
-                $scope.listService = listService;
-            });
-        }
-    };
-
+    /*
+    var update = function() {
+        var promise = $scope.mode.listServiceFn();
+        $q.when(promise).then(function(listService) {
+            $scope.listService = listService;
+        })
+    }
+    */
+    /*
     var update = function() {
         if($scope.facetValuePath == null) {
             updateFacetService();
@@ -871,42 +747,83 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
             updateFacetValueService();
         }
     };
+    */
 
-//    $scope.$watch(function() {
-//        var path = $scope.facetValuePath
-//        var r = path == null ? null : '' + path;
-//        return r;
-//    }, function(str) {
-//        if(str == null) {
-//            updateFacetService();
-//        } else {
-//            updateFacetValueService();
-//        }
-//    }, true);
+    /*
+     * DDDI
+     */
 
-    $scope.$watch(function() {
-        return $scope.breadcrumb.property;
-    }, function(property) {
-        if(property === true) {
-            $scope.facetValuePath = $scope.breadcrumb.pathHead.getPath();
+    var dddi = $dddi($scope);
+
+    dddi.register('mode', ['=showConstraints', '=breadcrumb', function(showConstraints, breadcrumb) {
+        var r;
+        if(showConstraints === true) {
+            r = modes['constraint'];
         } else {
-            $scope.facetValuePath = property == null ? null : appendProperty($scope.breadcrumb.pathHead, property);
+            var property = breadcrumb.property;
+
+            if(property === true) { // facet values for the empty facet
+                r = modes['facetValue'];
+            } else {
+                r = property == null ? modes['facet'] : modes['facetValue'];
+            }
+            return r;
         }
-    });
+        return r;
+    }]);
 
-    $scope.$watch('[breadcrumb.pathHead.hashCode(), facetValuePath.hashCode()]', function() {
-        $scope.location = $scope.facetValuePath != null ? $scope.facetValuePath : $scope.breadcrumb.pathHead;
-    }, true);
+    dddi.register('facetValuePath', ['=breadcrumb', // property may be null, but breadcrumb must exist
+        function(breadcrumb) {
+            var property = breadcrumb.property;
+
+            var r;
+            if(property === true) {
+                r = $scope.breadcrumb.pathHead.getPath();
+            } else {
+                r = property == null ? null : appendProperty($scope.breadcrumb.pathHead, property);
+            }
+            return r;
+        }]);
+
+    dddi.register('location', ['mode', '?=facetValuePath.hashCode()', '?=breadcrumb.pathHead.hashCode()',
+        function() {
+            var r;
+            if($scope.mode.type === 'constraint') {
+                r = 'constraint';
+            } else {
+                r = $scope.facetValuePath != null ? $scope.facetValuePath : $scope.breadcrumb.pathHead;
+            }
+
+            return r;
+        }]);
 
 
-    $scope.$watch('[ObjectUtils.hashCode(facetTreeConfig), breadcrumb.pathHead.hashCode(), facetValuePath.hashCode()]', function() {
-        update();
-    }, true);
+    /**
+     * Retrieve the filter object for the given location and mode
+     */
+    dddi.register('listFilter', ['location',
+        function(location) {
+            var r = $scope.locationToFilter.get($scope.location);
+            if(r == null) {
+                r = { limit: 10, offset: 0, concept: null };
+                $scope.locationToFilter.put($scope.location, r);
+            }
+            return r;
+        }]);
 
-    $scope.$watch('sparqlService', function() {
-        update();
-    });
+    dddi.register('ls.ctrl.filter', ['?listFilter',
+        function(r) {
+            return r || $scope.ls.ctrl.filter; // retain the value if the argument is null
+        }]);
+
+
+    dddi.register('listService', ['mode', 'location', 'facetService', 'facetValueService', 'constraintService', function(mode) {
+        var r = mode.listServiceFn();
+        return r;
+    }]);
+
 }])
+
 
 /**
  * The actual dependencies are:
@@ -921,13 +838,20 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
         templateUrl: 'template/facet-list/facet-list.html',
         //transclude: false,
         scope: {
-            sparqlService: '=',
-            facetTreeConfig: '=',
+            constraintManager: '=',
+            lookupServiceNodeLabels: '=',
+            facetService: '=',
+            facetValueService: '=',
+            constraintService: '=',
+
+
+            //sparqlService: '=',
+            //facetTreeConfig: '=',
             //facetConfig: '=',
             listFilter: '=?',
             breadcrumb: '=?uiModel', // The visible facet / facetValue
             pathHead: '=?',
-            plugins: '=?',
+            facetPlugins: '=?',
             pluginContext: '=?', //plugin context
             pagingStyle: '=?',
             loading: '=?',
