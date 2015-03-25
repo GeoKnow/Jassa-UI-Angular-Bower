@@ -624,6 +624,7 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
 
     var modes = {
         constraint: {
+            type: 'constraint',
             itemTemplate: 'template/facet-list/facet-list-item-constraint.html',
             listServiceFn: function() {
                 var r = $scope.constraintService;
@@ -631,6 +632,7 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
             }
         },
         facet: {
+            type: 'facet',
             itemTemplate: 'template/facet-list/facet-list-item-facet.html',
             listServiceFn: function() {
                 var r = ( $scope.facetService
@@ -641,6 +643,7 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
             }
         },
         facetValue: {
+            type: 'facetValue',
             itemTemplate: 'template/facet-list/facet-list-item-facet-value.html',
             listServiceFn: function() {
                 var r = ( $scope.facetValueService
@@ -697,7 +700,6 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
         var result = pathHead.getPath().copyAppendStep(new jassa.facete.Step(propertyName, pathHead.isInverse()));
         return result;
     };
-
 
 
     /*
@@ -768,7 +770,6 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
             } else {
                 r = property == null ? modes['facet'] : modes['facetValue'];
             }
-            return r;
         }
         return r;
     }]);
@@ -812,14 +813,23 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
             return r;
         }]);
 
+    dddi.register('filterModel', ['listFilter.concept', function(concept) {
+        return concept;
+    }]);
+
     dddi.register('ls.ctrl.filter', ['?listFilter',
-        function(r) {
-            return r || $scope.ls.ctrl.filter; // retain the value if the argument is null
+        function(listFilter) {
+            var r = listFilter || $scope.ls.ctrl.filter; // retain the value if the argument is null
+            return r;
         }]);
 
 
     dddi.register('listService', ['mode', 'location', 'facetService', 'facetValueService', 'constraintService', function(mode) {
         var r = mode.listServiceFn();
+        return r;
+    }]);
+
+    dddi.register('totalConstraints', ['constraintManager.getConstraints().length', function(r) {
         return r;
     }]);
 
@@ -3352,11 +3362,11 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "\n" +
     "    <!-- Navigation buttons -->\n" +
     "    <div style=\"width: 100%\">\n" +
-    "        <button ng-show=\"!showConstraints && facetValuePath\" class=\"btn btn-default facet-list-item-btn pull-left\" role=\"button\" ng-click=\"breadcrumb.property = null\"><span class=\"glyphicon glyphicon-chevron-left\"></span> Back</button>\n" +
-    "        <button ng-show=\"!showConstraints && !facetValuePath && !breadcrumb.pathHead.getPath().isEmpty()\" class=\"btn btn-default facet-list-item-btn pull-left\" role=\"button\" ng-click=\"breadcrumb.pathHead = breadcrumb.pathHead.up()\"><span class=\"glyphicon glyphicon-chevron-left\"></span> Up</button>\n" +
+    "        <button ng-show=\"!showConstraints && mode.type.facetValue\" class=\"btn btn-default facet-list-item-btn pull-left\" role=\"button\" ng-click=\"breadcrumb.property = null\"><span class=\"glyphicon glyphicon-chevron-left\"></span> Back</button>\n" +
+    "        <button ng-show=\"!showConstraints && !mode.type.facetValue && !breadcrumb.pathHead.getPath().isEmpty()\" class=\"btn btn-default facet-list-item-btn pull-left\" role=\"button\" ng-click=\"breadcrumb.pathHead = breadcrumb.pathHead.up()\"><span class=\"glyphicon glyphicon-chevron-left\"></span> Up</button>\n" +
     "\n" +
-    "        <button ng-show=\"!showConstraints\" class=\"btn btn-default facet-list-item-btn pull-right\" href=\"#\" ng-click=\"showConstraints=!showConstraints\">Constraints <span class=\"glyphicon glyphicon-align-justify\"></span></button>\n" +
-    "        <button ng-show=\"showConstraints\" class=\"btn btn-default facet-list-item-btn pull-right\" href=\"#\" ng-click=\"showConstraints=!showConstraints\">Facets <span class=\"glyphicon glyphicon-th-large\"></span></button>\n" +
+    "        <button ng-show=\"!showConstraints\" class=\"btn btn-default facet-list-item-btn pull-right\" href=\"\" ng-click=\"showConstraints=!showConstraints\">Constraints <span class=\"counter\">{{totalConstraints == null ? '?' : totalConstraints}}</span> <span class=\"glyphicon glyphicon-align-justify\"></span></button>\n" +
+    "        <button ng-show=\"showConstraints\" class=\"btn btn-default facet-list-item-btn pull-right\" href=\"\" ng-click=\"showConstraints=!showConstraints\">Facets <span class=\"glyphicon glyphicon-th-large\"></span></button>\n" +
     "\n" +
     "        <div class=\"clearfix\"></div>\n" +
     "    </div>\n" +
@@ -3390,6 +3400,12 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "\n" +
     "        </li>\n" +
     "    </ul>\n" +
+    "\n" +
+    "    <div style=\"width: 100%\">\n" +
+    "        <button style=\"text-align: left; width: 100%\" ng-class=\"constraintManager.getConstraints().length ? '' : 'disabled'\" class=\"btn btn-warning\" type=\"button\" ng-click=\"constraintManager.clear()\">\n" +
+    "            <span class=\"glyphicon glyphicon-remove-circle\"></span> Clear Filters\n" +
+    "        </button>\n" +
+    "    </div>\n" +
     "\n" +
     "</div>");
 }]);
