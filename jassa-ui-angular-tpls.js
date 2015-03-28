@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-03-27
+ * Version: 0.9.0-SNAPSHOT - 2015-03-28
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.replace","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -758,7 +758,9 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
 
     var dddi = $dddi($scope);
 
-    dddi.register('mode', ['=showConstraints', '=breadcrumb', function(showConstraints, breadcrumb) {
+    dddi.register('mode', ['showConstraints', 'breadcrumb.pathHead.hashCode()', '?breadcrumb.property', function(showConstraints) {
+        var breadcrumb = $scope.breadcrumb;
+
         var r;
         if(showConstraints === true) {
             r = modes['constraint'];
@@ -774,8 +776,9 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
         return r;
     }]);
 
-    dddi.register('facetValuePath', ['=breadcrumb', // property may be null, but breadcrumb must exist
-        function(breadcrumb) {
+    dddi.register('facetValuePath', ['breadcrumb.pathHead.hashCode()', 'breadcrumb.property', // property may be null, but breadcrumb must exist
+        function() {
+            var breadcrumb = $scope.breadcrumb;
             var property = breadcrumb.property;
 
             var r;
@@ -787,11 +790,11 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
             return r;
         }]);
 
-    dddi.register('location', ['mode', '?=facetValuePath.hashCode()', '?=breadcrumb.pathHead.hashCode()',
+    dddi.register('location', ['mode', '?facetValuePath.hashCode()', '?breadcrumb.pathHead.hashCode()',
         function() {
             var r;
             if($scope.mode.type === 'constraint') {
-                r = 'constraint';
+                r = jassa.facete.Path.parse('constraint'); //'constraint';
             } else {
                 r = $scope.facetValuePath != null ? $scope.facetValuePath : $scope.breadcrumb.pathHead;
             }
@@ -803,7 +806,7 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
     /**
      * Retrieve the filter object for the given location and mode
      */
-    dddi.register('listFilter', ['location',
+    dddi.register('listFilter', ['location.hashCode()',
         function(location) {
             var r = $scope.locationToFilter.get($scope.location);
             if(r == null) {
@@ -817,11 +820,20 @@ angular.module('ui.jassa.facet-list', ['ui.jassa.breadcrumb', 'ui.jassa.paging-s
         return concept;
     }]);
 
+    $scope.$watch('listFilter', function(listFilter) {
+        if(listFilter) {
+            angular.copy(listFilter, $scope.ls.ctrl.filter);
+        }
+    });
+
+    /*
     dddi.register('ls.ctrl.filter', ['?listFilter',
         function(listFilter) {
-            var r = listFilter || $scope.ls.ctrl.filter; // retain the value if the argument is null
+            //var r = listFilter || $scope.ls.ctrl.filter; // retain the value if the argument is null
+            var r = listFilter;
             return r;
         }]);
+    */
 
 
     dddi.register('listService', ['mode', 'location', 'facetService', 'facetValueService', 'constraintService', function(mode) {
@@ -2196,10 +2208,16 @@ var ListServiceWatcher = Jassa.ext.Class.create({
             result.watchers.push(r);
             return r;
         };
+        var addWatchCollection = function() {
+            var r = $scope.$watchCollection.apply($scope, arguments);
+            result.watchers.push(r);
+            return r;
+        };
 
         addWatch(rawListServiceExpr, function(lse) {
             result.ctrl.listService = lse;
         });
+
 
         addWatch(function() {
             return result.ctrl.listService;
@@ -2210,23 +2228,6 @@ var ListServiceWatcher = Jassa.ext.Class.create({
 
             //result.state.listService = jassa.util.PromiseUtils.lastRequestify(rawListService);
             jassa.util.PromiseUtils.replaceService(result.state, 'listService', listService);
-
-            result.doRefresh();
-        });
-
-        addWatch(function() {
-            return result.ctrl.filter;
-        }, function() {
-            result.doRefresh();
-        }, true);
-
-        addWatch(function() {
-            return result.ctrl.filter.offset;
-        }, function(offset) {
-            var limit = result.ctrl.filter.limit;
-            result.state.paging.currentPage = Math.max(Math.floor(offset / limit) + 1, 1);
-
-            result.doRefreshData();
         });
 
         addWatch(function() {
@@ -2234,9 +2235,123 @@ var ListServiceWatcher = Jassa.ext.Class.create({
         }, function(currentPage) {
             var limit = result.ctrl.filter.limit;
             result.ctrl.filter.offset = (currentPage - 1) * limit;
-
-            result.doRefreshData();
         });
+
+        addWatch(function() {
+            return result.ctrl.filter.offset;
+        }, function(offset) {
+            var limit = result.ctrl.filter.limit;
+            result.state.paging.currentPage = Math.max(Math.floor(offset / limit) + 1, 1);
+        });
+
+        var arr = [null, null, null, null];
+
+        var getState = function() {
+
+            arr[0] = result.ctrl.listService;
+            arr[1] = result.ctrl.filter.concept;
+            arr[2] = result.ctrl.filter.limit;
+            arr[3] = result.ctrl.filter.offset;
+
+            return arr;
+        };
+
+        addWatchCollection(getState, function(n, o) {
+            // If the service and/or the filter changed, we need to refresh everything
+            // otherwise only the data (totalItem count is unaffected)
+            if (n[0] != o[1] || n[1] != o[1]) {
+                result.doRefresh();
+            } else {
+                result.doRefreshData();
+            }
+        });
+
+
+
+//
+//        var newScope = $scope.$new();
+//        newScope.result = result;
+//
+//        dddi = $dddi(newScope);
+//
+//
+//        dddi.register('result.ctrl.paging.currentPage', ['?result.ctrl.filter.limit', 'result.ctrl.filter.offset',
+//            function(limit, offset) {
+//                var r = limit ? Math.max(Math.floor(offset / limit) + 1, 1) : 1;
+//            }]);
+//
+//        dddi.register('result.ctrl.filter.offset', ['result.ctrl.paging.currentPage', '?result.ctrl.filter.limit',
+//            function(currentPage, limit) {
+//                var r = limit ? (currentPage - 1) * limit : null;
+//                return r;
+//            }]);
+//
+//        dddi.register('result.ctrl.listService', [rawListServiceExpr,
+//            function(rawListService) {
+//                var r = jassa.util.PromiseUtils.lastRequestify(rawListService);
+//                return r;
+//            }]);
+//
+//
+//        dddi.register('result.state.listService', ['?result.ctrl.listService',
+//            function(listService) {
+//                if(result.cancelAll) {
+//                    result.cancelAll();
+//                }
+//
+//                var oldService = result.ctrl.listService;
+//                if(oldService && oldService.cancelAll) {
+//                    oldService.cancelAll();
+//                }
+//
+//                var r = listService == null ? null : PromiseUtils.lastRequestify(listService);
+//                return r;
+//            }]);
+//
+//        dddi.register('result.state.paging.totalItems', [ 'result.ctrl.listService', 'result.ctrl.filter.concept,'
+//            function(listService, concept) {
+//
+//            newScope.result.loading.pageCount = true;
+//
+//            var r = listService.fetchCount(concept).then(function(countInfo) {
+//                newScope.result.loading.pageCount = false;
+//                return countInfo.count;
+//            });
+//
+//            return r;
+//        }]);
+//
+//        dddi.register('result.state.paging.numPages', [ 'result.state.paging.totalItems', 'result.ctrl.filter.limit'
+//            function(totalItems, limit) {
+//                var r = (limit == null ? 1 : Math.ceil(totalItems / limit));
+//
+//                r = Math.max(r, 1);
+//
+//                return r;
+//            }]);
+//
+//
+//        //
+//
+//
+//        dddi.register('result.state.entries', ['result.ctrl.listService', 'result.ctrl.filter.concept', 'result.ctrl.filter.offset', 'result.ctrl.filter.limit',
+//            function(listService, concept, limit, offset) {
+//                var r = listService.fetchItems(concept, limit, offset);
+//                return r;
+//            });
+//        }]);
+//
+//        dddi.register('result.state.paging.currentPage');
+//        dddi.register('result.state.paging.currentPage');
+//
+//        dddi.register('result.state.items', ['result.state.entries',
+//            function(entries) {
+//                var r = entries.map(function(entry) {
+//                    return entry.val;
+//                });
+//                return r;
+//            }]);
+//
 
 //        addWatch(function() {
 //            return $scope.rawListService;
@@ -2962,7 +3077,7 @@ angular.module("template/breadcrumb/breadcrumb.html", []).run(["$templateCache",
     "    </li>\n" +
     "\n" +
     "    <li>\n" +
-    "        <button class=\"btn btn-default\" ng-disabled=\"path.isEmpty()\" ng-click=\"setPath(0)\">\n" +
+    "        <button class=\"btn btn-default\" ng-disabled=\"model.pathHead.getPath().isEmpty() && model.property==null\" ng-click=\"setPath(0)\">\n" +
     "            <span class=\"glyphicon glyphicon-home\"></span>\n" +
     "        </button>\n" +
     "    </li>\n" +
@@ -2985,7 +3100,8 @@ angular.module("template/breadcrumb/breadcrumb.html", []).run(["$templateCache",
     "    </li>\n" +
     "\n" +
     "    <li ng-show=\"state.value != null\">\n" +
-    "        <button class=\"btn btn-default\" ng-click=\"model.property = null\">\n" +
+    "        <button class=\"btn btn-default\" ng-disabled=\"true\">\n" +
+    "<!--         ng-click=\"model.property=null\" -->\n" +
     "            {{state.value.labelInfo.displayLabel}} {{model.pathHead.isInverse() ? '-1' : ''}}\n" +
     "        </button>\n" +
     "    </li>\n" +
@@ -3328,7 +3444,7 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "        No service configured (yet).\n" +
     "    </div>\n" +
     "\n" +
-    "<!-- Loading - data: {{ls.loading.data}} - pages: {{ls.loading.pageCount}} -->\n" +
+    "<!-- Loading - data: {{ls.loading.data}} - pages: {{ls.loading.pageCount}} - mode: {{mode.type}} -->\n" +
     "\n" +
     "    <!-- Breadcrumb -->\n" +
     "<!--     <breadcrumb sparql-service=\"sparqlService\" ng-model=\"breadcrumb\"></breadcrumb> -->\n" +
@@ -3388,24 +3504,23 @@ angular.module("template/facet-list/facet-list.html", []).run(["$templateCache",
     "    Showing {{ls.state.items.length}} entries in the positions {{(ls.state.paging.currentPage - 1) * ls.state.filter.limit + (ls.state.items.length ? 1 : 0)}} - {{(ls.state.paging.currentPage - 1) * ls.state.filter.limit + ls.state.items.length}} out of {{ls.state.paging.totalItems}} items in total.\n" +
     "    </span>\n" +
     "\n" +
-    "    <ul ng-show=\"!ls.state.items.length\" class=\"list-group facet-list\">\n" +
-    "        <li class=\"list-group-item facet-list-item\" style=\"text-align: center\">\n" +
+    "    <!-- Data list -->\n" +
+    "    <ul ng-show=\"!ls.loading.data\" class=\"list-group facet-list\">\n" +
+    "        <li ng-repeat=\"item in ls.state.items\" class=\"list-group-item facet-list-item visible-on-hover-parent\" ng-class=\"facetValuePath==null?'facet':'facet-value'\">\n" +
+    "<!--             {{item}} -->\n" +
+    "            <div ng-include=\"mode.itemTemplate\"></div>\n" +
+    "        </li>\n" +
+    "\n" +
+    "        <li ng-show=\"!ls.state.items.length\" class=\"list-group-item facet-list-item\" style=\"text-align: center\">\n" +
     "            <button class=\"btn btn-default btn-label facet-list-item-btn disabled\" type=\"button\">\n" +
     "                No results\n" +
     "            </button>\n" +
     "        </li>\n" +
     "    </ul>\n" +
     "\n" +
-    "    <!-- Data list -->\n" +
-    "    <ul ng-show=\"!ls.loading.data\" class=\"list-group facet-list\">\n" +
-    "        <li ng-repeat=\"item in ls.state.items\" class=\"list-group-item facet-list-item visible-on-hover-parent\" ng-class=\"facetValuePath==null?'facet':'facet-value'\">\n" +
-    "            <div ng-include=\"mode.itemTemplate\"></div>\n" +
-    "        </li>\n" +
-    "    </ul>\n" +
-    "\n" +
     "    <ul ng-show=\"ls.loading.data\" class=\"list-group facet-list\">\n" +
     "        <li class=\"list-group-item facet-list-item\" style=\"text-align: center\">\n" +
-    "            <span ng-show=\"ls.loading.pageCount\" class=\"glyphicon glyphicon-refresh\"></span>\n" +
+    "            <span class=\"glyphicon glyphicon-refresh\"></span>\n" +
     "        </li>\n" +
     "    </ul>\n" +
     "\n" +
