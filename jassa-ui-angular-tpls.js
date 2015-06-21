@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-04-02
+ * Version: 0.9.0-SNAPSHOT - 2015-06-22
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.tpls", "ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.replace","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -484,7 +484,7 @@ angular.module('ui.jassa.dataset-browser', ['ui.jassa.replace'])
         });
 
         result.fetchItems().then(function(entries) {
-            console.log('Got: ', entries);
+            console.log('DatasetBrowser - found items: ', entries);
         });
 
         return result;
@@ -3132,6 +3132,7 @@ angular.module("template/dataset-browser/dataset-browser.html", []).run(["$templ
     "        do-filter=\"doFilter\"\n" +
     "        total-items=\"totalItems\"\n" +
     "        items=\"items\"\n" +
+    "        max-size=\"maxSize\"\n" +
     "        langs=\"langs\"\n" +
     "        availableLangs=\"availableLangs\"\n" +
     "        search-modes=\"searchModes\"\n" +
@@ -3158,9 +3159,6 @@ angular.module("template/dataset-browser/dataset-list-item.html", []).run(["$tem
     "<!--         <ng-include src=\"'template/dataset-browser/dataset-item.html'\" include-replace></ng-include> -->\n" +
     "<!--     </li> -->\n" +
     "<!--     <li ng-show=\"!items.length\" class=\"alert alert-danger\" style=\"text-align: center\" role=\"alert\">No results</li> -->\n" +
-    "\n" +
-    "\n" +
-    "\n" +
     "\n" +
     "<div class=\"media-left\">\n" +
     "    <a href=\"\" ng-click=\"context.onSelect({context: context, dataset: item})\">\n" +
