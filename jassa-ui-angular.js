@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2015-06-22
+ * Version: 0.9.0-SNAPSHOT - 2015-09-17
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.replace","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
