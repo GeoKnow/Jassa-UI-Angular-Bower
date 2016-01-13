@@ -2112,7 +2112,7 @@ var ContextMenuUtils = {
 
 
 
-angular.module('ui.jassa.ng-context-menu')
+angular.module('ui.jassa.ng-context-menu', [])
 
 .factory('ngContextMenuFactory', ['$compile', '$templateCache', '$http', function($compile, $templateCache, $http) {
     var createContentPromise = function(options) {
