@@ -2,7 +2,7 @@
  * jassa-ui-angular
  * https://github.com/GeoKnow/Jassa-UI-Angular
 
- * Version: 0.9.0-SNAPSHOT - 2016-01-13
+ * Version: 0.9.0-SNAPSHOT - 2016-01-18
  * License: MIT
  */
 angular.module("ui.jassa", ["ui.jassa.auto-focus","ui.jassa.blurify","ui.jassa.breadcrumb","ui.jassa.compile","ui.jassa.constraint-list","ui.jassa.dataset-browser","ui.jassa.facet-list","ui.jassa.facet-tree","ui.jassa.facet-typeahead","ui.jassa.facet-value-list","ui.jassa.jassa-list","ui.jassa.jassa-list-browser","ui.jassa.jassa-media-list","ui.jassa.lang-select","ui.jassa.list-search","ui.jassa.ng-context-menu","ui.jassa.paging-model","ui.jassa.paging-style","ui.jassa.pointer-events-scroll-fix","ui.jassa.replace","ui.jassa.resizable","ui.jassa.scroll-glue-right","ui.jassa.sparql-grid","ui.jassa.template-list"]);
@@ -114,7 +114,7 @@ angular.module('ui.jassa.breadcrumb', [])
             ls = new jassa.service.LookupServiceTransform(ls, function(val) { return val.displayLabel; });
             //ls = new jassa.service.LookupServicePathLabels(ls);
 
-            var uris = jassa.facete.PathUtils.getUris(path);
+            var uris = jassa.facete.PathUtils.getNodes(path);
 
             if(property != null) {
                 uris.push(property);
