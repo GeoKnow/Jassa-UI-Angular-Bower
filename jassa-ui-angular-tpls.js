@@ -1883,7 +1883,7 @@ angular.module('ui.jassa.jassa-media-list', ['ui.jassa.replace'])
 
 ;
 
-angular.module('ui.jassa.lang-select', ['ui.sortable', 'ui.keypress', 'ngSanitize'])
+angular.module('ui.jassa.lang-select', ['ui.sortable', 'ngSanitize'])
 
 .controller('LangSelectCtrl', ['$scope', function($scope) {
     $scope.newLang = '';
@@ -3827,7 +3827,7 @@ angular.module("template/lang-select/lang-select.html", []).run(["$templateCache
     "        </ul>\n" +
     "    </li>\n" +
     "    <li ng-show=\"showLangInput\">\n" +
-    "        <form ng-submit=\"confirmAddLang(newLang)\" ui-keydown=\"{esc: 'showLangInput=false'}\">\n" +
+    "        <form ng-submit=\"confirmAddLang(newLang)\" ng-keydown=\"{esc: 'showLangInput=false'}\">\n" +
     "            <input auto-focus=\"focusLangInput\" size=\"4\" ng-model=\"newLang\" type=\"text\" class=\"lang-borderless\" typeahead=\"lang for lang in getLangSuggestions() | filter:$viewValue | limitTo:8\">\n" +
     "            <button type=\"submit\" style=\"cursor: pointer;\" class=\"btn label label-info\"\"><span class=\"glyphicon glyphicon-ok\"></span></button>\n" +
     "            <button type=\"reset\" style=\"cursor: pointer;\" class=\"btn label label-warning\" ng-click=\"showLangInput=false\"><span class=\"glyphicon glyphicon-remove\"></span></button>\n" +

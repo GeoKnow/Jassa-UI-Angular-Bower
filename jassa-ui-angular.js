@@ -1882,7 +1882,7 @@ angular.module('ui.jassa.jassa-media-list', ['ui.jassa.replace'])
 
 ;
 
-angular.module('ui.jassa.lang-select', ['ui.sortable', 'ui.keypress', 'ngSanitize'])
+angular.module('ui.jassa.lang-select', ['ui.sortable', 'ngSanitize'])
 
 .controller('LangSelectCtrl', ['$scope', function($scope) {
     $scope.newLang = '';
